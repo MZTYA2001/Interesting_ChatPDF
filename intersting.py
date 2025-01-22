@@ -24,9 +24,8 @@ with st.sidebar:
         # Define the chat prompt template
         prompt = ChatPromptTemplate.from_template(
             """
-         Answer the questions based solely on the content of the provided file. If the question is unrelated to the content of the file, respond with: 'Sorry, ask me just about this file.' Ensure that all responses are accurate and derived strictly from the file's context.
-
-
+            Answer the questions based on the provided context only.
+            Please provide the most accurate response based on the question.
             <context>
             {context}
             </context>
@@ -50,7 +49,7 @@ with st.sidebar:
                         embeddings,
                         allow_dangerous_deserialization=True  # Only use if you trust the source of the embeddings
                     )
-                    # st.sidebar.write("Embeddings loaded successfully :partying_face:")
+                    st.sidebar.write("Embeddings loaded successfully :partying_face:")
                 except Exception as e:
                     st.error(f"Error loading embeddings: {str(e)}")
                     st.session_state.vectors = None
