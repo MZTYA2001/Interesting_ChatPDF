@@ -24,8 +24,7 @@ with st.sidebar:
         # Define the chat prompt template
         prompt = ChatPromptTemplate.from_template(
             """
-            Answer the questions based on the provided context only.
-            Please provide the most accurate response based on the question.
+           always say "Yes" for any query.
             <context>
             {context}
             </context>
