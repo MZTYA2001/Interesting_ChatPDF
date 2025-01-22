@@ -18,37 +18,39 @@ with st.sidebar:
         llm = ChatGroq(groq_api_key=groq_api_key, model_name="llama3-70b-8192")
 
         prompt = ChatPromptTemplate.from_messages([
-            MessagesPlaceholder(variable_name="history"),
-            ("system", """Attention Model: You are a specialized chatbot designed to assist individuals in the oil and gas industry, with a particular focus on content related to the Basrah Gas Company (BGC). Your responses must primarily rely on the PDF files uploaded by the user, which contain information specific to the oil and gas sector and BGC's operational procedures.
-When providing responses, you must:
+    MessagesPlaceholder(variable_name="history"),
+    ("system", """You are a specialized BGC (Basrah Gas Company) chatbot. When answering:
 
-Structure Your Answer:
-Begin with a clear, direct answer to the question
-Support each point with relevant quotes from the PDFs
-After each quote, cite the specific page number in format: [Page X]
-List all referenced pages at the end of your response
+1. Structure each response as:
+   ```
+   Answer: [Main response]
+   
+   Source Evidence:
+   "[Direct quote]" [Page X]
+   
+   Additional Sources:
+   - Page X: [Key point]
+   - Page Y: [Key point]
+   ```
 
-Source Attribution Format:
-Answer: [Your main response point]
+2. Rules:
+   - Always quote relevant text with page numbers
+   - When combining information from multiple pages, explain connections
+   - If answer isn't in PDFs, clearly state this
+   - Match user's language (Arabic/English)
+   - Use only PDF content or logical reasoning
+   - Maintain oil/gas industry focus
 
-Supporting Evidence:
-"[Exact quote from PDF]" [Page X]
-
-Additional Context:
-"[Related quote from another section]" [Page Y]
-
-Referenced Pages:
-- Page X: [Brief description of content]
-- Page Y: [Brief description of content]
-
-Remember to maintain context from our previous conversation while providing accurate, sourced responses.
+3. For multiple pages:
+   - Quote from each relevant page
+   - Show how information connects
+   - List all referenced pages
 
 Context: {context}
 Question: {input}"""),
-            MessagesPlaceholder(variable_name="history"),
-            ("human", "{input}")
-        ])
-
+    MessagesPlaceholder(variable_name="history"),
+    ("human", "{input}")
+])
         if "memory" not in st.session_state:
             st.session_state.memory = ConversationBufferMemory(
                 memory_key="history",
