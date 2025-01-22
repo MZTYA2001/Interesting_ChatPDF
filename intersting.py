@@ -21,40 +21,16 @@ with st.sidebar:
         os.environ["GOOGLE_API_KEY"] = google_api_key
         llm = ChatGroq(groq_api_key=groq_api_key, model_name="llama3-70b-8192")
 
-        prompt = ChatPromptTemplate.from_messages([
-            MessagesPlaceholder(variable_name="history"),
-            ("system", """You are a specialized BGC (Basrah Gas Company) chatbot. For PDF-related questions:
-
-1. Structure each response as:
-   ```
-   Answer: [Main response]
-   
-   Source Evidence:
-   "[Direct quote]" [Page X]
-   
-   Additional Sources:
-   - Page X: [Key point]
-   - Page Y: [Key point]
-   ```
-
-2. For mathematical operations:
-   - Remember previous calculations
-   - Use them in subsequent operations when referenced
-   - Show your work clearly
-
-3. Rules:
-   - Quote relevant text with page numbers for PDF content
-   - Maintain conversation context
-   - Match user's language (Arabic/English)
-   - For math, show steps and previous values used
-
-Context: {context}
-Previous conversation: {history}
-Question: {input}"""),
-            MessagesPlaceholder(variable_name="history"),
-            ("human", "{input}")
-        ])
-
+       prompt = ChatPromptTemplate.from_template(
+            """
+            Answer the questions based on the provided context only.
+            Please provide the most accurate response based on the question.
+            <context>
+            {context}
+            <context>
+            Questions: {input}
+            """
+        )
         if "memory" not in st.session_state:
             st.session_state.memory = ConversationBufferMemory(
                 memory_key="history",
