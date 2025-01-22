@@ -25,7 +25,7 @@ with st.sidebar:
         prompt = ChatPromptTemplate.from_template(
             """
             Answer the questions based on the provided context only.
-            Please provide the most accurate response based on the question.
+            Please provide the most accurate response based on the question also provide the page number of the answer.
             <context>
             {context}
             </context>
