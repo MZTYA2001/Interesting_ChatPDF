@@ -19,7 +19,7 @@ def extract_number(text):
 with st.sidebar:
     if groq_api_key and google_api_key:
         os.environ["GOOGLE_API_KEY"] = google_api_key
-        llm = ChatGroq(groq_api_key=groq_api_key, model_name="llama3-70b-8192")
+        llm = ChatGroq(groq_api_key=groq_api_key, model_name="gemma2-9b-it")
 
        prompt = ChatPromptTemplate.from_template(
             """
