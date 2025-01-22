@@ -7,10 +7,14 @@ from langchain.chains import create_retrieval_chain
 from langchain_community.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.memory import ConversationBufferMemory
-from langchain_core.messages import HumanMessage, AIMessage
+import re
 
 groq_api_key = "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"
 google_api_key = "AIzaSyDdAiOdIa2I28sphYw36Genb4D--2IN1tU"
+
+def extract_number(text):
+    numbers = re.findall(r'\d+', text)
+    return int(numbers[-1]) if numbers else None
 
 with st.sidebar:
     if groq_api_key and google_api_key:
@@ -18,8 +22,8 @@ with st.sidebar:
         llm = ChatGroq(groq_api_key=groq_api_key, model_name="llama3-70b-8192")
 
         prompt = ChatPromptTemplate.from_messages([
-    MessagesPlaceholder(variable_name="history"),
-    ("system", """You are a specialized BGC (Basrah Gas Company) chatbot. When answering:
+            MessagesPlaceholder(variable_name="history"),
+            ("system", """You are a specialized BGC (Basrah Gas Company) chatbot. For PDF-related questions:
 
 1. Structure each response as:
    ```
@@ -33,36 +37,38 @@ with st.sidebar:
    - Page Y: [Key point]
    ```
 
-2. Rules:
-   - Always quote relevant text with page numbers
-   - When combining information from multiple pages, explain connections
-   - If answer isn't in PDFs, clearly state this
-   - Match user's language (Arabic/English)
-   - Use only PDF content or logical reasoning
-   - Maintain oil/gas industry focus
+2. For mathematical operations:
+   - Remember previous calculations
+   - Use them in subsequent operations when referenced
+   - Show your work clearly
 
-3. For multiple pages:
-   - Quote from each relevant page
-   - Show how information connects
-   - List all referenced pages
+3. Rules:
+   - Quote relevant text with page numbers for PDF content
+   - Maintain conversation context
+   - Match user's language (Arabic/English)
+   - For math, show steps and previous values used
 
 Context: {context}
+Previous conversation: {history}
 Question: {input}"""),
-    MessagesPlaceholder(variable_name="history"),
-    ("human", "{input}")
-])
+            MessagesPlaceholder(variable_name="history"),
+            ("human", "{input}")
+        ])
+
         if "memory" not in st.session_state:
             st.session_state.memory = ConversationBufferMemory(
                 memory_key="history",
                 return_messages=True
             )
+            
+        if "last_number" not in st.session_state:
+            st.session_state.last_number = None
 
         if "vectors" not in st.session_state:
             with st.spinner("Loading embeddings... Please wait."):
                 embeddings = GoogleGenerativeAIEmbeddings(
                     model="models/embedding-001"
                 )
-                
                 embeddings_path = "embeddings"
                 try:
                     st.session_state.vectors = FAISS.load_local(
@@ -74,7 +80,6 @@ Question: {input}"""),
                 except Exception as e:
                     st.error(f"Error loading embeddings: {str(e)}")
                     st.session_state.vectors = None
-
     else:
         st.error("Please enter both API keys to proceed.")
 
@@ -100,13 +105,6 @@ if human_input := st.chat_input("Ask something about the document"):
         )
         retriever = st.session_state.vectors.as_retriever()
         retrieval_chain = create_retrieval_chain(retriever, document_chain)
-
-        chat_history = [
-            (msg["content"], st.session_state.messages[i+1]["content"])
-            for i, msg in enumerate(st.session_state.messages[:-1:2])
-        ]
-        
-        st.session_state.memory.chat_memory.add_user_message(human_input)
         
         response = retrieval_chain.invoke({
             "input": human_input,
@@ -114,6 +112,13 @@ if human_input := st.chat_input("Ask something about the document"):
         })
         
         assistant_response = response["answer"]
+        
+        # Update last number if response contains a numerical result
+        number = extract_number(assistant_response)
+        if number is not None:
+            st.session_state.last_number = number
+            
+        st.session_state.memory.chat_memory.add_user_message(human_input)
         st.session_state.memory.chat_memory.add_ai_message(assistant_response)
 
         st.session_state.messages.append(
