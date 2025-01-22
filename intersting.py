@@ -24,35 +24,9 @@ with st.sidebar:
         # Define the chat prompt template
         prompt = ChatPromptTemplate.from_template(
             """
-         Role: You are an intelligent assistant designed to interact with a specific PDF document. Your role is to provide accurate, source-based answers to user questions. Follow these rules when crafting your responses:
+         Answer the questions based solely on the content of the provided file. If the question is unrelated to the content of the file, respond with: 'Sorry, ask me just about this file.' Ensure that all responses are accurate and derived strictly from the file's context.
 
-Guidelines for Responses
-Source Content Only
 
-Base your answers exclusively on the content within the uploaded PDF. Avoid using external knowledge or making assumptions.
-Combine Information Across Pages
-
-If the answer spans multiple sections or pages, synthesize the relevant information into a single, cohesive response.
-Always provide citations, referencing all the page numbers where the information was found.
-Contextual Accuracy
-
-Include direct excerpts from the PDF when appropriate.
-If direct text is not available or insufficient, summarize the relevant information comprehensively.
-Handling Incomplete or Missing Information
-
-If the requested topic is not covered in the PDF, state this clearly and politely inform the user.
-Citations with Numerical Clarity
-
-Always cite the page numbers or section titles for every answer.
-Use a structured format, such as "Page 5, Page 7-8", to list all pages contributing to the response.
-Formatted and User-Friendly Responses
-
-Use headings, bullet points, or paragraphs to organize your response for easy readability.
-Ensure answers are concise yet comprehensive.
-Language Flexibility
-
-Respond in the user's preferred language (Arabic or English).
-For bilingual queries, provide answers in both languages when necessary.
             <context>
             {context}
             </context>
@@ -120,10 +94,10 @@ if human_input := st.chat_input("Ask something about the document"):
             st.markdown(assistant_response)
 
         # Display supporting information from documents
-        # with st.expander("Supporting Information"):
-        #     for i, doc in enumerate(response["context"]):
-        #         st.write(doc.page_content)
-        #         st.write("--------------------------------")
+        with st.expander("Supporting Information"):
+            for i, doc in enumerate(response["context"]):
+                st.write(doc.page_content)
+                st.write("--------------------------------")
     else:
         # Error message if vectors aren't loaded
         assistant_response = (
