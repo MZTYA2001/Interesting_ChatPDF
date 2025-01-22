@@ -24,16 +24,35 @@ with st.sidebar:
         # Define the chat prompt template
         prompt = ChatPromptTemplate.from_template(
             """
-          You are an assistant designed to interact with a specific PDF document. Your goal is to answer questions using the content of the uploaded PDF. Follow these rules when responding:
+         Role: You are an intelligent assistant designed to interact with a specific PDF document. Your role is to provide accurate, source-based answers to user questions. Follow these rules when crafting your responses:
 
-Source Content: Only answer questions based on the information contained in the PDF.
-Provide Context: Include the exact text from the PDF if it directly answers the question. Otherwise, provide a well-organized summary.
-Handle Incomplete Answers: If you cannot find enough information in the PDF, review all relevant sections and summarize your findings.
-No External Information: Do not provide information or speculate about topics not covered in the PDF. Politely inform the user that the requested topic is not in the document.
-Citations and Formatting: For every answer:
-Include citations with the page numbers of context answer that you get from the document.
-Format the answer for readability and ease of understanding. Use lists, headers, or paragraphs as needed.
-Language Flexibility: Answer questions in either Arabic or English based on the user's preference, accommodating bilingual content when necessary.
+Guidelines for Responses
+Source Content Only
+
+Base your answers exclusively on the content within the uploaded PDF. Avoid using external knowledge or making assumptions.
+Combine Information Across Pages
+
+If the answer spans multiple sections or pages, synthesize the relevant information into a single, cohesive response.
+Always provide citations, referencing all the page numbers where the information was found.
+Contextual Accuracy
+
+Include direct excerpts from the PDF when appropriate.
+If direct text is not available or insufficient, summarize the relevant information comprehensively.
+Handling Incomplete or Missing Information
+
+If the requested topic is not covered in the PDF, state this clearly and politely inform the user.
+Citations with Numerical Clarity
+
+Always cite the page numbers or section titles for every answer.
+Use a structured format, such as "Page 5, Page 7-8", to list all pages contributing to the response.
+Formatted and User-Friendly Responses
+
+Use headings, bullet points, or paragraphs to organize your response for easy readability.
+Ensure answers are concise yet comprehensive.
+Language Flexibility
+
+Respond in the user's preferred language (Arabic or English).
+For bilingual queries, provide answers in both languages when necessary.
             <context>
             {context}
             </context>
@@ -66,7 +85,7 @@ Language Flexibility: Answer questions in either Arabic or English based on the 
         st.error("Please enter both API keys to proceed.")
 
 # Main area for chat interface
-st.title("Chat with PDF :speech_balloon:")
+st.title("Mohammed Al-Yaseen | BGC ChatBot")
 
 # Initialize session state for chat messages if not already done
 if "messages" not in st.session_state:
@@ -101,10 +120,10 @@ if human_input := st.chat_input("Ask something about the document"):
             st.markdown(assistant_response)
 
         # Display supporting information from documents
-        with st.expander("Supporting Information"):
-            for i, doc in enumerate(response["context"]):
-                st.write(doc.page_content)
-                st.write("--------------------------------")
+        # with st.expander("Supporting Information"):
+        #     for i, doc in enumerate(response["context"]):
+        #         st.write(doc.page_content)
+        #         st.write("--------------------------------")
     else:
         # Error message if vectors aren't loaded
         assistant_response = (
