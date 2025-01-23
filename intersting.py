@@ -80,7 +80,7 @@ prompt = ChatPromptTemplate.from_template(
 # Initialize Streamlit Sidebar
 with st.sidebar:
     voice_language = st.selectbox("Voice Input Language", 
-        ["Arabic", "English", "French", "Spanish"])
+        ["English", "Spanish"])
 
 # Check API Keys and Initialize LLM
 if groq_api_key and google_api_key:
@@ -135,10 +135,10 @@ with col1:
     human_input = st.text_input("Ask something about the document", key="user_input")
 
 with col2:
-    st.markdown("""
-    <div class="mic-button" onclick="document.getElementById('voice_trigger').click()">🎤</div>
-    <input type="hidden" id="voice_trigger">
-    """, unsafe_allow_html=True)
+    # st.markdown("""
+    # <div class="mic-button" onclick="document.getElementById('voice_trigger').click()">🎤</div>
+    # <input type="hidden" id="voice_trigger">
+    # """, unsafe_allow_html=True)
     voice_input = record_voice(language=input_lang_code)
 
 st.markdown('</div>', unsafe_allow_html=True)
