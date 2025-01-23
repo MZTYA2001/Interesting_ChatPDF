@@ -64,8 +64,8 @@ def record_voice(language="en"):
         state.text_received = []
 
     text = speech_to_text(
-        start_prompt="🎤 Click and speak to ask question",
-        stop_prompt="⚠️Stop recording🚨",
+        # start_prompt="🎤 Click and speak to ask question",
+        # stop_prompt="⚠️Stop recording🚨",
         language=language,
         use_container_width=True,
         just_once=True,
