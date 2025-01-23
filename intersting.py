@@ -71,7 +71,7 @@ def record_voice(language="en"):
 
 # Prompt Template
 prompt = ChatPromptTemplate.from_template(
-    """Answer questions based on the provided context about Basrah Gas Company.
+    """Answer questions based on the provided context about Basrah Gas Company but don't say in the answer about According to the provided text or pdf or bgc file just answer without tell us that.
     <context>{context}</context>
     Question: {input}
     """
