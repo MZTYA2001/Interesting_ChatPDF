@@ -23,14 +23,16 @@ st.markdown("""
     color: #E0E0E0;
     border: 2px solid #4A6CF7;
     border-radius: 10px;
+    padding: 10px;
+    width: 100%;
 }
 .mic-button {
     background-color: #4A6CF7;
     color: white;
     border: none;
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -50,6 +52,16 @@ st.markdown("""
     padding: 10px;
     box-shadow: 0 -2px 5px rgba(0,0,0,0.2);
     z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.input-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80%;
+    margin: 0 auto;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -60,8 +72,8 @@ google_api_key = "AIzaSyDdAiOdIa2I28sphYw36Genb4D--2IN1tU"
 
 def record_voice(language="en"):
     text = speech_to_text(
-        start_prompt="Record",
-        stop_prompt="Stop Recording",
+        start_prompt="🎤",
+        stop_prompt="⏹️",
         language=language,
         use_container_width=True,
         just_once=True,
@@ -128,14 +140,19 @@ input_lang_code = "ar" if voice_language == "Arabic" else voice_language.lower()
 # Sticky input at the bottom
 st.markdown('<div class="sticky-input">', unsafe_allow_html=True)
 
-col1, col2 = st.columns([0.9, 0.1])
+# Create a container for the input and voice button
+st.markdown('<div class="input-container">', unsafe_allow_html=True)
+
+# Text input and voice button in the same row
+col1, col2 = st.columns([0.85, 0.15])
 
 with col1:
-    human_input = st.text_input("Ask something about the document", key="user_input")
+    human_input = st.text_input("Ask something about the document", key="user_input", label_visibility="collapsed")
 
 with col2:
     voice_input = record_voice(language=input_lang_code)
 
+st.markdown('</div>', unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Process input
