@@ -1,7 +1,7 @@
 import streamlit as st
 import os
 from langchain_groq import ChatGroq
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.prompts import ChatPromptTemplate
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains import create_retrieval_chain
 from langchain_community.vectorstores import FAISS
@@ -42,15 +42,24 @@ st.markdown("""
 .mic-button:hover {
     background-color: #6382FF;
 }
-.sticky-input {
+#chat-input-container {
     position: fixed;
     bottom: 0;
     left: 0;
-    width: 100%;
-    background-color: #1E1E2E;
+    right: 0;
     padding: 10px;
-    box-shadow: 0 -2px 5px rgba(0,0,0,0.2);
-    z-index: 1000;
+    background-color: #1E1E2E;
+    border-top: 2px solid #4A6CF7;
+    z-index: 999;
+}
+#chat-input-container input {
+    flex: 1;
+    padding: 10px;
+    margin-right: 10px;
+    border-radius: 5px;
+    border: 2px solid #4A6CF7;
+    background-color: #2C2C3E;
+    color: white;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -60,14 +69,29 @@ groq_api_key = "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"
 google_api_key = "AIzaSyDdAiOdIa2I28sphYw36Genb4D--2IN1tU"
 
 def record_voice(language="en"):
+    state = st.session_state
+
+    if "text_received" not in state:
+        state.text_received = []
+
     text = speech_to_text(
-        start_prompt="🎤 Click and speak to ask question",
+        start_prompt="🎤 Click and speak to ask a question",
         stop_prompt="⚠️ Stop recording 🚨",
         language=language,
         use_container_width=True,
         just_once=True,
     )
-    return text if text else None
+
+    if text:
+        state.text_received.append(text)
+
+    result = ""
+    for text in state.text_received:
+        result += text
+
+    state.text_received = []
+
+    return result if result else None
 
 # Prompt Template
 prompt = ChatPromptTemplate.from_template(
@@ -77,10 +101,10 @@ prompt = ChatPromptTemplate.from_template(
     """
 )
 
-# Initialize Streamlit Sidebar
+# Initialize Sidebar
 with st.sidebar:
     voice_language = st.selectbox("Voice Input Language", 
-        ["Arabic", "English"])
+        ["Arabic", "English", "French", "Spanish"])
 
 # Check API Keys and Initialize LLM
 if groq_api_key and google_api_key:
@@ -97,8 +121,10 @@ if groq_api_key and google_api_key:
     # Initialize vectors
     if "vectors" not in st.session_state:
         with st.spinner("Loading embeddings... Please wait."):
+
             embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
             embeddings_path = "embeddings"
+
             try:
                 st.session_state.vectors = FAISS.load_local(
                     embeddings_path,
@@ -123,29 +149,24 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Process user input
+# Determine language code for voice input
 input_lang_code = "ar" if voice_language == "Arabic" else voice_language.lower()[:2]
 
-# Sticky input at the bottom
-st.markdown('<div class="sticky-input">', unsafe_allow_html=True)
+# Voice and text input at the bottom
+st.markdown("""
+<div id="chat-input-container">
+    <div style="display: flex; align-items: center;">
+        <input id="user_input" placeholder="Ask something about the document" style="flex: 1;" />
+        <button class="mic-button" onclick="document.getElementById('voice_trigger').click()">🎤</button>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
-col1, col2 = st.columns([0.9, 0.1])
-
-with col1:
-    human_input = st.text_input("Ask something about the document", key="user_input")
-
-with col2:
-    st.markdown("""
-    <div class="mic-button" onclick="document.getElementById('voice_trigger').click()">🎤</div>
-    <input type="hidden" id="voice_trigger">
-    """, unsafe_allow_html=True)
-    voice_input = record_voice(language=input_lang_code)
-
-st.markdown('</div>', unsafe_allow_html=True)
+# Voice input trigger
+voice_input = record_voice(language=input_lang_code)
 
 # Process input
-if voice_input:
-    human_input = voice_input
+human_input = voice_input or st.text_input("Ask something about the document", key="user_input")
 
 if human_input:
     st.session_state.messages.append({"role": "user", "content": human_input})
@@ -173,11 +194,16 @@ if human_input:
         with st.chat_message("assistant"):
             st.markdown(assistant_response)
 
+        # Supporting Information
         with st.expander("Supporting Information"):
-            for i, doc in enumerate(response["context"]):
-                page_number = doc.metadata.get("page_number", "Unknown")
-                st.write(f"Page {page_number}: {doc.page_content}")
-                st.write("--------------------------------")
+            if "context" in response:
+                for i, doc in enumerate(response["context"]):
+                    page_number = doc.metadata.get("page", "unknown")
+                    st.write(f"**Document {i+1}** - Page: {page_number}")
+                    st.write(doc.page_content)
+                    st.write("--------------------------------")
+            else:
+                st.write("No context available.")
     else:
         assistant_response = "Error: Unable to load embeddings. Please check the embeddings folder."
         st.session_state.messages.append(
