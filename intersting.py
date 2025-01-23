@@ -152,12 +152,6 @@ def record_voice(language="en"):
 voice_input = record_voice(language=input_lang_code)
 
 # Bottom input container
-st.markdown(f"""
-<div id="chat-input-container">
-    <input id="user_input" placeholder="Ask something about the document" />
-    <button class="mic-button" onclick="window.location.href='/?voice_trigger=true'">🎤</button>
-</div>
-""", unsafe_allow_html=True)
 
 # Process input
 human_input = voice_input or st.text_input("", key="user_input", label_visibility="collapsed")
