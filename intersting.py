@@ -100,11 +100,12 @@ if human_input:
         st.markdown(human_input)
 
     if "vectors" in st.session_state and st.session_state.vectors is not None:
-        document_chain = create_stuff_documents_chain(
-            llm,
-            prompt,
-            memory=st.session_state.memory
-        )
+document_chain = create_stuff_documents_chain(
+    llm=llm,
+    prompt=prompt,
+    memory=st.session_state.memory
+)
+
         retriever = st.session_state.vectors.as_retriever()
         retrieval_chain = create_retrieval_chain(retriever, document_chain)
         
