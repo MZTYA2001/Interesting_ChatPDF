@@ -12,23 +12,6 @@ from streamlit_mic_recorder import speech_to_text
 # Styling Configuration
 st.set_page_config(page_title="BGC ChatBot", page_icon="🛢️", layout="wide")
 
-# Custom CSS for fixed input container at the bottom
-st.markdown(
-    """
-    <style>
-    .stTextInput, .stButton, .stTextArea {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 80%;
-        z-index: 100;
-    }
-    </style>
-    """, 
-    unsafe_allow_html=True
-)
-
 # API Configuration
 groq_api_key = "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"
 google_api_key = "AIzaSyDdAiOdIa2I28sphYw36Genb4D--2IN1tU"
@@ -118,11 +101,26 @@ def record_voice(language="en"):
 
     return result if result else None
 
-# Voice input trigger
-voice_input = record_voice(language=input_lang_code)
+# Input container for voice and text
+col1, col2 = st.columns([4, 1])  # 4: for text input, 1: for voice button
 
-# Bottom input container (centered)
-human_input = voice_input or st.text_input("", key="user_input", label_visibility="collapsed")
+with col1:
+    # Bottom input container (fixed)
+    human_input = st.text_input("", key="user_input", label_visibility="collapsed")
+
+with col2:
+    # Voice button (fixed on the right)
+    if st.button("🎤"):
+        voice_input = record_voice(language=input_lang_code)
+        if voice_input:
+            st.session_state.messages.append({"role": "user", "content": voice_input})
+            with st.chat_message("user"):
+                st.markdown(voice_input)
+    else:
+        voice_input = None
+
+# Process input (Text or Voice)
+human_input = human_input or voice_input
 
 if human_input:
     st.session_state.messages.append({"role": "user", "content": human_input})
