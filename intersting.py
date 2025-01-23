@@ -46,8 +46,9 @@ st.markdown("""
 .sticky-input {
     position: fixed;
     bottom: 0;
-    left: 0;
-    width: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
     background-color: #1E1E2E;
     padding: 10px;
     box-shadow: 0 -2px 5px rgba(0,0,0,0.2);
@@ -60,13 +61,12 @@ st.markdown("""
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 80%;
-    margin: 0 auto;
+    width: 100%;
 }
 .chat-container {
-    max-height: calc(100vh - 150px);
+    max-height: calc(100vh - 250px); /* Adjust based on your layout */
     overflow-y: auto;
-    padding-bottom: 100px; /* Space for the fixed input section */
+    padding-bottom: 150px; /* Space for the fixed input section */
 }
 .chat-message {
     margin: 10px 0;
@@ -83,6 +83,12 @@ st.markdown("""
 .chat-message.assistant {
     margin-right: auto;
     background-color: #2C2C3E;
+}
+.supporting-info {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #2C2C3E;
+    border-radius: 10px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -210,6 +216,7 @@ if human_input:
         with st.chat_message("assistant"):
             st.markdown(assistant_response)
 
+        # Supporting Information
         with st.expander("Supporting Information"):
             if "context" in response:
                 for i, doc in enumerate(response["context"]):
