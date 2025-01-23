@@ -156,6 +156,10 @@ st.title("Mohammed Al-Yaseen | BGC ChatBot")
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Initialize user input in session state
+if "user_input" not in st.session_state:
+    st.session_state.user_input = ""
+
 # Display chat history
 st.markdown('<div class="chat-container">', unsafe_allow_html=True)
 for message in st.session_state.messages:
@@ -186,7 +190,7 @@ st.markdown('<div class="input-container">', unsafe_allow_html=True)
 col1, col2 = st.columns([0.85, 0.15])
 
 with col1:
-    human_input = st.text_input("Ask something about the document", key="user_input", label_visibility="collapsed")
+    user_input = st.text_input("Ask something about the document", key="user_input", label_visibility="collapsed")
 
 with col2:
     voice_input = record_voice(language=input_lang_code)
@@ -196,11 +200,11 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 # Process input
 if voice_input:
-    human_input = voice_input
+    user_input = voice_input
 
-if human_input:
+if user_input:
     # Add user message to chat history
-    st.session_state.messages.append({"role": "user", "content": human_input})
+    st.session_state.messages.append({"role": "user", "content": user_input})
     
     # Clear the input field
     st.session_state.user_input = ""
@@ -211,8 +215,8 @@ if human_input:
         retrieval_chain = create_retrieval_chain(retriever, document_chain)
 
         response = retrieval_chain.invoke({
-            "input": human_input,
-            "context": retriever.get_relevant_documents(human_input),
+            "input": user_input,
+            "context": retriever.get_relevant_documents(user_input),
             "history": st.session_state.memory.chat_memory.messages
         })
 
@@ -227,7 +231,7 @@ if human_input:
         })
 
         # Update memory
-        st.session_state.memory.chat_memory.add_user_message(human_input)
+        st.session_state.memory.chat_memory.add_user_message(user_input)
         st.session_state.memory.chat_memory.add_ai_message(assistant_response)
 
         # Rerun to update the chat display
