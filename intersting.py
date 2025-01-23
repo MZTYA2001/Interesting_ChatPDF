@@ -70,12 +70,11 @@ def record_voice(language="en"):
     return text if text else None
 
 # Prompt Template
-prompt = ChatPromptTemplate.from_template(
-    """Answer questions based on the provided context about Basrah Gas Company but don't say in the answer about According to the provided text or pdf or bgc file just answer without tell us that.
-    <context>{context}</context>
-    Question: {input}
-    """
-)
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "Answer questions based on the provided context about Basrah Gas Company but don't say in the answer about According to the provided text or pdf or bgc file just answer without tell us that."),
+    MessagesPlaceholder(variable_name="history"),
+    ("human", "{input}"),
+])
 
 # Initialize Streamlit Sidebar
 with st.sidebar:
@@ -135,10 +134,6 @@ with col1:
     human_input = st.text_input("Ask something about the document", key="user_input")
 
 with col2:
-    # st.markdown("""
-    # <div class="mic-button" onclick="document.getElementById('voice_trigger').click()">🎤</div>
-    # <input type="hidden" id="voice_trigger">
-    # """, unsafe_allow_html=True)
     voice_input = record_voice(language=input_lang_code)
 
 st.markdown('</div>', unsafe_allow_html=True)
