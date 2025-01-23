@@ -63,6 +63,27 @@ st.markdown("""
     width: 80%;
     margin: 0 auto;
 }
+.chat-container {
+    max-height: calc(100vh - 150px);
+    overflow-y: auto;
+    padding-bottom: 100px; /* Space for the fixed input section */
+}
+.chat-message {
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: #2C2C3E;
+    max-width: 80%;
+    word-wrap: break-word;
+}
+.chat-message.user {
+    margin-left: auto;
+    background-color: #4A6CF7;
+}
+.chat-message.assistant {
+    margin-right: auto;
+    background-color: #2C2C3E;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -130,9 +151,12 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 # Display chat history
+st.markdown('<div class="chat-container">', unsafe_allow_html=True)
 for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+    role = message["role"]
+    content = message["content"]
+    st.markdown(f'<div class="chat-message {role}">{content}</div>', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
 
 # Process user input
 input_lang_code = "ar" if voice_language == "Arabic" else voice_language.lower()[:2]
