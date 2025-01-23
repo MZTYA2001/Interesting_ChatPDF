@@ -162,6 +162,15 @@ for message in st.session_state.messages:
     role = message["role"]
     content = message["content"]
     st.markdown(f'<div class="chat-message {role}">{content}</div>', unsafe_allow_html=True)
+    
+    # Display supporting information for each assistant message
+    if role == "assistant" and "supporting_info" in message:
+        with st.expander("Supporting Information"):
+            for i, doc in enumerate(message["supporting_info"]):
+                page_number = doc.metadata.get("page", "unknown")
+                st.write(f"**Document {i+1}** - Page: {page_number}")
+                st.write(doc.page_content)
+                st.write("--------------------------------")
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Process user input
@@ -190,9 +199,11 @@ if voice_input:
     human_input = voice_input
 
 if human_input:
+    # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": human_input})
-    with st.chat_message("user"):
-        st.markdown(human_input)
+    
+    # Clear the input field
+    st.session_state.user_input = ""
 
     if "vectors" in st.session_state and st.session_state.vectors is not None:
         document_chain = create_stuff_documents_chain(llm, prompt)
@@ -206,30 +217,24 @@ if human_input:
         })
 
         assistant_response = response["answer"]
+        supporting_info = response["context"]
 
+        # Add assistant response and supporting info to chat history
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": assistant_response,
+            "supporting_info": supporting_info
+        })
+
+        # Update memory
         st.session_state.memory.chat_memory.add_user_message(human_input)
         st.session_state.memory.chat_memory.add_ai_message(assistant_response)
 
-        st.session_state.messages.append(
-            {"role": "assistant", "content": assistant_response}
-        )
-        with st.chat_message("assistant"):
-            st.markdown(assistant_response)
-
-        # Supporting Information
-        with st.expander("Supporting Information"):
-            if "context" in response:
-                for i, doc in enumerate(response["context"]):
-                    page_number = doc.metadata.get("page", "unknown")
-                    st.write(f"**Document {i+1}** - Page: {page_number}")
-                    st.write(doc.page_content)
-                    st.write("--------------------------------")
-            else:
-                st.write("No context available.")
+        # Rerun to update the chat display
+        st.rerun()
     else:
         assistant_response = "Error: Unable to load embeddings. Please check the embeddings folder."
         st.session_state.messages.append(
             {"role": "assistant", "content": assistant_response}
         )
-        with st.chat_message("assistant"):
-            st.markdown(assistant_response)
+        st.rerun()
