@@ -187,7 +187,7 @@ if human_input:
             if "context" in response:
                 for i, doc in enumerate(response["context"]):
                     page_number = doc.metadata.get("page", "unknown")
-                    st.write(f"**Document {i+1}** - Page: {page_number}")
+                    st.write(f"In Page: {page_number}")
                     st.write(doc.page_content)
                     st.write("--------------------------------")
             else:
