@@ -18,12 +18,6 @@ st.markdown("""
     background-color: #1E1E2E;
     color: #E0E0E0;
 }
-.stTextInput > div > div > input {
-    background-color: #2C2C3E;
-    color: #E0E0E0;
-    border: 2px solid #4A6CF7;
-    border-radius: 10px;
-}
 .mic-button {
     background-color: #4A6CF7;
     color: white;
@@ -42,17 +36,16 @@ st.markdown("""
     background-color: #6382FF;
 }
 #chat-input-container {
-    width: 60%;
-    margin: 0 auto;
     position: fixed;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
+    bottom: 0;
+    left: 20%;
+    right: 20%;
     padding: 10px;
     background-color: #1E1E2E;
     border-top: 2px solid #4A6CF7;
     z-index: 999;
-    border-radius: 10px;
+    display: flex;
+    align-items: center;
 }
 #chat-input-container input {
     flex: 1;
@@ -70,31 +63,6 @@ st.markdown("""
 groq_api_key = "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"
 google_api_key = "AIzaSyDdAiOdIa2I28sphYw36Genb4D--2IN1tU"
 
-def record_voice(language="en"):
-    state = st.session_state
-
-    if "text_received" not in state:
-        state.text_received = []
-
-    text = speech_to_text(
-        start_prompt="🎤 Click and speak to ask a question",
-        stop_prompt="⚠️ Stop recording 🚨",
-        language=language,
-        use_container_width=True,
-        just_once=True,
-    )
-
-    if text:
-        state.text_received.append(text)
-
-    result = ""
-    for text in state.text_received:
-        result += text
-
-    state.text_received = []
-
-    return result if result else None
-
 # Prompt Template
 prompt = ChatPromptTemplate.from_template(
     """Answer questions based on the provided context about Basrah Gas Company.
@@ -102,6 +70,11 @@ prompt = ChatPromptTemplate.from_template(
     Question: {input}
     """
 )
+
+# Initialize Sidebar
+with st.sidebar:
+    voice_language = st.selectbox("Voice Input Language", 
+        ["Arabic", "English", "French", "Spanish"])
 
 # Check API Keys and Initialize LLM
 if groq_api_key and google_api_key:
@@ -147,20 +120,44 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # Determine language code for voice input
-input_lang_code = "ar" if st.sidebar.selectbox("Voice Input Language", ["Arabic", "English", "French", "Spanish"]) == "Arabic" else "en"
+input_lang_code = "ar" if voice_language == "Arabic" else voice_language.lower()[:2]
 
-# Voice and text input container
-st.markdown("""
-<div id="chat-input-container">
-    <div style="display: flex; align-items: center;">
-        <input id="user_input" placeholder="Ask something about the document" style="flex: 1;" />
-        <button class="mic-button" onclick="document.getElementById('voice_trigger').click()">🎤</button>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+# Voice Recording Function
+def record_voice(language="en"):
+    state = st.session_state
+
+    if "text_received" not in state:
+        state.text_received = []
+
+    text = speech_to_text(
+        start_prompt="🎤 Click and speak to ask a question",
+        stop_prompt="⚠️ Stop recording 🚨",
+        language=language,
+        use_container_width=True,
+        just_once=True,
+    )
+
+    if text:
+        state.text_received.append(text)
+
+    result = ""
+    for text in state.text_received:
+        result += text
+
+    state.text_received = []
+
+    return result if result else None
 
 # Voice input trigger
 voice_input = record_voice(language=input_lang_code)
+
+# Bottom input container
+st.markdown("""
+<div id="chat-input-container">
+    <input id="user_input" placeholder="Ask something about the document" />
+    <button class="mic-button" onclick="document.getElementById('voice_trigger').click()">🎤</button>
+</div>
+""", unsafe_allow_html=True)
 
 # Process input
 human_input = voice_input or st.text_input("", key="user_input", label_visibility="collapsed")
