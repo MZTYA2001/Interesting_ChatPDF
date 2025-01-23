@@ -108,16 +108,29 @@ with col1:
     # Bottom input container (fixed)
     human_input = st.text_input("", key="user_input", label_visibility="collapsed")
 
-with col2:
-    # Voice button (fixed on the right)
-    if st.button("🎤"):
-        voice_input = record_voice(language=input_lang_code)
-        if voice_input:
-            st.session_state.messages.append({"role": "user", "content": voice_input})
-            with st.chat_message("user"):
-                st.markdown(voice_input)
-    else:
-        voice_input = None
+# Ensure voice button is at the bottom and centered
+st.markdown("""
+    <style>
+        .stButton > button {
+            width: 100%;
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# Voice button (fixed at the bottom)
+if st.button("🎤"):
+    voice_input = record_voice(language=input_lang_code)
+    if voice_input:
+        st.session_state.messages.append({"role": "user", "content": voice_input})
+        with st.chat_message("user"):
+            st.markdown(voice_input)
+else:
+    voice_input = None
 
 # Process input (Text or Voice)
 human_input = human_input or voice_input
