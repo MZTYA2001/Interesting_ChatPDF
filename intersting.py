@@ -1,13 +1,14 @@
 import streamlit as st
 import os
 from langchain_groq import ChatGroq
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains import create_retrieval_chain
 from langchain_community.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.memory import ConversationBufferMemory
 from streamlit_mic_recorder import speech_to_text
+import re
 
 # Styling Configuration
 st.set_page_config(page_title="BGC ChatBot", page_icon="🛢️", layout="wide")
@@ -20,12 +21,11 @@ st.markdown("""
 }
 .stTextInput > div > div > input {
     background-color: #2C2C3E;
-        width: 60%;
     color: #E0E0E0;
     border: 2px solid #4A6CF7;
     border-radius: 10px;
 }
-.mic-button, .send-button {
+.mic-button {
     background-color: #4A6CF7;
     color: white;
     border: none;
@@ -37,9 +37,9 @@ st.markdown("""
     justify-content: center;
     cursor: pointer;
     transition: background-color 0.3s;
-    margin: 10px auto;
+    margin-left: 10px;
 }
-.mic-button:hover, .send-button:hover {
+.mic-button:hover {
     background-color: #6382FF;
 }
 .sticky-input {
@@ -129,64 +129,59 @@ input_lang_code = "ar" if voice_language == "Arabic" else voice_language.lower()
 # Sticky input at the bottom
 st.markdown('<div class="sticky-input">', unsafe_allow_html=True)
 
-col1, col2, col3 = st.columns([0.4, 0.2, 0.4])
+col1, col2 = st.columns([0.9, 0.1])
 
 with col1:
-    st.write("")  # Empty space for alignment
-
-with col2:
     human_input = st.text_input("Ask something about the document", key="user_input")
 
-    col_a, col_b = st.columns(2, gap="small")
-
-    with col_a:
-        if st.button("🎤", key="record_button"):
-            voice_input = record_voice(language=input_lang_code)
-            if voice_input:
-                human_input = voice_input
-
-    with col_b:
-        if st.button("➤", key="send_button"):
-            if human_input:
-                st.session_state.messages.append({"role": "user", "content": human_input})
-                with st.chat_message("user"):
-                    st.markdown(human_input)
-
-                if "vectors" in st.session_state and st.session_state.vectors is not None:
-                    document_chain = create_stuff_documents_chain(llm, prompt)
-                    retriever = st.session_state.vectors.as_retriever()
-                    retrieval_chain = create_retrieval_chain(retriever, document_chain)
-
-                    response = retrieval_chain.invoke({
-                        "input": human_input,
-                        "history": st.session_state.memory.chat_memory.messages
-                    })
-
-                    assistant_response = response["answer"]
-
-                    st.session_state.memory.chat_memory.add_user_message(human_input)
-                    st.session_state.memory.chat_memory.add_ai_message(assistant_response)
-
-                    st.session_state.messages.append(
-                        {"role": "assistant", "content": assistant_response}
-                    )
-                    with st.chat_message("assistant"):
-                        st.markdown(assistant_response)
-
-                    with st.expander("Supporting Information"):
-                        for i, doc in enumerate(response["context"]):
-                            page_number = doc.metadata.get("page_number", "Unknown")
-                            st.write(f"Page {page_number}: {doc.page_content}")
-                            st.write("--------------------------------")
-                else:
-                    assistant_response = "Error: Unable to load embeddings. Please check the embeddings folder."
-                    st.session_state.messages.append(
-                        {"role": "assistant", "content": assistant_response}
-                    )
-                    with st.chat_message("assistant"):
-                        st.markdown(assistant_response)
-
-with col3:
-    st.write("")  # Empty space for alignment
+with col2:
+    # st.markdown("""
+    # <div class="mic-button" onclick="document.getElementById('voice_trigger').click()">🎤</div>
+    # <input type="hidden" id="voice_trigger">
+    # """, unsafe_allow_html=True)
+    voice_input = record_voice(language=input_lang_code)
 
 st.markdown('</div>', unsafe_allow_html=True)
+
+# Process input
+if voice_input:
+    human_input = voice_input
+
+if human_input:
+    st.session_state.messages.append({"role": "user", "content": human_input})
+    with st.chat_message("user"):
+        st.markdown(human_input)
+
+    if "vectors" in st.session_state and st.session_state.vectors is not None:
+        document_chain = create_stuff_documents_chain(llm, prompt)
+        retriever = st.session_state.vectors.as_retriever()
+        retrieval_chain = create_retrieval_chain(retriever, document_chain)
+
+        response = retrieval_chain.invoke({
+            "input": human_input,
+            "history": st.session_state.memory.chat_memory.messages
+        })
+
+        assistant_response = response["answer"]
+
+        st.session_state.memory.chat_memory.add_user_message(human_input)
+        st.session_state.memory.chat_memory.add_ai_message(assistant_response)
+
+        st.session_state.messages.append(
+            {"role": "assistant", "content": assistant_response}
+        )
+        with st.chat_message("assistant"):
+            st.markdown(assistant_response)
+
+        with st.expander("Supporting Information"):
+            for i, doc in enumerate(response["context"]):
+                page_number = doc.metadata.get("page_number", "Unknown")
+                st.write(f"Page {page_number}: {doc.page_content}")
+                st.write("--------------------------------")
+    else:
+        assistant_response = "Error: Unable to load embeddings. Please check the embeddings folder."
+        st.session_state.messages.append(
+            {"role": "assistant", "content": assistant_response}
+        )
+        with st.chat_message("assistant"):
+            st.markdown(assistant_response)
