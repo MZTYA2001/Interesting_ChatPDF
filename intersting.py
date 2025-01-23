@@ -61,8 +61,8 @@ google_api_key = "AIzaSyDdAiOdIa2I28sphYw36Genb4D--2IN1tU"
 
 def record_voice(language="en"):
     text = speech_to_text(
-        start_prompt="🎤 Click and speak to ask question",
-        stop_prompt="⚠️ Stop recording 🚨",
+        start_prompt="Record",
+        stop_prompt="Stop Recording",
         language=language,
         use_container_width=True,
         just_once=True,
