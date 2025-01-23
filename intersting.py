@@ -11,7 +11,7 @@ from streamlit_mic_recorder import speech_to_text
 import re
 
 # Styling Configuration
-st.set_page_config(page_title="BGC ChatBot", page_icon="", layout="wide")
+st.set_page_config(page_title="BGC ChatBot", page_icon="🛢️", layout="wide")
 
 st.markdown("""
 <style>
@@ -42,9 +42,15 @@ st.markdown("""
 .mic-button:hover {
     background-color: #6382FF;
 }
-.stChatInputContainer {
-    display: flex;
-    align-items: center;
+.sticky-input {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #1E1E2E;
+    padding: 10px;
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.2);
+    z-index: 1000;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -53,34 +59,15 @@ st.markdown("""
 groq_api_key = "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"
 google_api_key = "AIzaSyDdAiOdIa2I28sphYw36Genb4D--2IN1tU"
 
-def extract_number(text):
-    numbers = re.findall(r'\d+', text)
-    return int(numbers[-1]) if numbers else None
-
 def record_voice(language="en"):
-    state = st.session_state
-
-    if "text_received" not in state:
-        state.text_received = []
-
     text = speech_to_text(
-        # start_prompt="🎤 Click and speak to ask question",
-        # stop_prompt="⚠️Stop recording🚨",
+        start_prompt="🎤 Click and speak to ask question",
+        stop_prompt="⚠️ Stop recording 🚨",
         language=language,
         use_container_width=True,
         just_once=True,
     )
-
-    if text:
-        state.text_received.append(text)
-
-    result = ""
-    for text in state.text_received:
-        result += text
-
-    state.text_received = []
-
-    return result if result else None
+    return text if text else None
 
 # Prompt Template
 prompt = ChatPromptTemplate.from_template(
@@ -136,31 +123,30 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Determine language code for voice input
+# Process user input
 input_lang_code = "ar" if voice_language == "Arabic" else voice_language.lower()[:2]
 
-# Voice input section
+# Sticky input at the bottom
+st.markdown('<div class="sticky-input">', unsafe_allow_html=True)
+
 col1, col2 = st.columns([0.9, 0.1])
 
 with col1:
-    # Text input field
     human_input = st.text_input("Ask something about the document", key="user_input")
 
 with col2:
-    # Microphone button
-    # st.markdown("""
-    # <div class="mic-button" onclick="document.getElementById('voice_trigger').click()">🎤</div>
-    # <input type="hidden" id="voice_trigger">
-    # """, unsafe_allow_html=True)
-    
-    # Voice input trigger
+    st.markdown("""
+    <div class="mic-button" onclick="document.getElementById('voice_trigger').click()">🎤</div>
+    <input type="hidden" id="voice_trigger">
+    """, unsafe_allow_html=True)
     voice_input = record_voice(language=input_lang_code)
 
-# Determine input source
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Process input
 if voice_input:
     human_input = voice_input
 
-# Process input
 if human_input:
     st.session_state.messages.append({"role": "user", "content": human_input})
     with st.chat_message("user"):
@@ -170,14 +156,14 @@ if human_input:
         document_chain = create_stuff_documents_chain(llm, prompt)
         retriever = st.session_state.vectors.as_retriever()
         retrieval_chain = create_retrieval_chain(retriever, document_chain)
-        
+
         response = retrieval_chain.invoke({
             "input": human_input,
             "history": st.session_state.memory.chat_memory.messages
         })
-        
+
         assistant_response = response["answer"]
-        
+
         st.session_state.memory.chat_memory.add_user_message(human_input)
         st.session_state.memory.chat_memory.add_ai_message(assistant_response)
 
@@ -189,7 +175,8 @@ if human_input:
 
         with st.expander("Supporting Information"):
             for i, doc in enumerate(response["context"]):
-                st.write(doc.page_content)
+                page_number = doc.metadata.get("page_number", "Unknown")
+                st.write(f"Page {page_number}: {doc.page_content}")
                 st.write("--------------------------------")
     else:
         assistant_response = "Error: Unable to load embeddings. Please check the embeddings folder."
