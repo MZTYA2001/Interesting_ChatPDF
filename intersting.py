@@ -10,9 +10,11 @@ from langchain.memory import ConversationBufferMemory
 from streamlit_mic_recorder import speech_to_text
 import re
 
+# API Keys
 groq_api_key = "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"
 google_api_key = "AIzaSyDdAiOdIa2I28sphYw36Genb4D--2IN1tU"
 
+# Helper Functions
 def extract_number(text):
     numbers = re.findall(r'\d+', text)
     return int(numbers[-1]) if numbers else None
@@ -40,7 +42,54 @@ def record_voice(language="en"):
     state.text_received = []
     return result if result else None
 
+# Page Configuration
+st.set_page_config(
+    page_title="BGC ChatBot",
+    layout="wide",
+    page_icon="💡",
+    initial_sidebar_state="expanded",
+)
+
+# Custom Style
+st.markdown(
+    """
+    <style>
+        .stApp {
+            background-color: #f0f8ff;
+            color: #003366;
+            font-family: 'Arial', sans-serif;
+        }
+        .stSidebar {
+            background-color: #003366;
+        }
+        .stButton > button {
+            background-color: #003366;
+            color: white;
+            border: none;
+            font-size: 16px;
+            padding: 10px;
+        }
+        .stButton > button:hover {
+            background-color: #00509e;
+        }
+        input[type=text] {
+            border: 2px solid #00509e;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# Sidebar
 with st.sidebar:
+    st.title("🎙️ BGC ChatBot")
+    st.markdown(
+        """
+        Welcome to the BGC ChatBot. This assistant is tailored for the oil and gas industry, 
+        providing seamless text and voice interaction.
+        """
+    )
+
     if groq_api_key and google_api_key:
         os.environ["GOOGLE_API_KEY"] = google_api_key
         llm = ChatGroq(groq_api_key=groq_api_key, model_name="gemma2-9b-it")
@@ -56,7 +105,7 @@ with st.sidebar:
                 memory_key="history",
                 return_messages=True
             )
-            
+
         if "last_number" not in st.session_state:
             st.session_state.last_number = None
 
@@ -72,14 +121,15 @@ with st.sidebar:
                         embeddings,
                         allow_dangerous_deserialization=True
                     )
-                    st.sidebar.write("Embeddings loaded successfully :partying_face:")
+                    st.success("Embeddings loaded successfully! ✅")
                 except Exception as e:
                     st.error(f"Error loading embeddings: {str(e)}")
                     st.session_state.vectors = None
     else:
         st.error("Please enter both API keys to proceed.")
 
-st.title("Mohammed Al-Yaseen | BGC ChatBot")
+# Chat Interface
+st.title("💡 Mohammed Al-Yaseen | BGC ChatBot")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -88,16 +138,18 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Voice input
-with st.sidebar:
-    st.subheader("🎙️ Voice Input")
-    language = st.selectbox("Choose Language", ["en", "ar"])
-    human_input = record_voice(language=language)
+# Voice and Text Input
+col1, col2 = st.columns([8, 1])
+with col1:
+    user_input = st.text_input("Type your message here:", "")
+with col2:
+    if st.button("🎙️"):
+        user_input = record_voice(language="en")
 
-if human_input:
-    st.session_state.messages.append({"role": "user", "content": human_input})
+if user_input:
+    st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
-        st.markdown(human_input)
+        st.markdown(user_input)
 
     if "vectors" in st.session_state and st.session_state.vectors is not None:
         document_chain = create_stuff_documents_chain(
@@ -108,20 +160,19 @@ if human_input:
 
         retriever = st.session_state.vectors.as_retriever()
         retrieval_chain = create_retrieval_chain(retriever, document_chain)
-        
+
         response = retrieval_chain.invoke({
-            "input": human_input,
+            "input": user_input,
             "history": st.session_state.memory.chat_memory.messages
         })
-        
+
         assistant_response = response["answer"]
-        
-        # Update last number if response contains a numerical result
+
         number = extract_number(assistant_response)
         if number is not None:
             st.session_state.last_number = number
-            
-        st.session_state.memory.chat_memory.add_user_message(human_input)
+
+        st.session_state.memory.chat_memory.add_user_message(user_input)
         st.session_state.memory.chat_memory.add_ai_message(assistant_response)
 
         st.session_state.messages.append(
