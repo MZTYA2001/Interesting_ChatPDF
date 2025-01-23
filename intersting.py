@@ -174,10 +174,14 @@ if human_input:
             st.markdown(assistant_response)
 
         with st.expander("Supporting Information"):
-            for i, doc in enumerate(response["context"]):
-                page_number = doc.metadata.get("page_number", "Unknown")
-                st.write(f"Page {page_number}: {doc.page_content}")
-                st.write("--------------------------------")
+            if "context" in response:
+                for i, doc in enumerate(response["context"]):
+                    page_number = doc.metadata.get("page", "unknown")
+                    st.write(f"**Document {i+1}** - Page: {page_number}")
+                    st.write(doc.page_content)
+                    st.write("--------------------------------")
+            else:
+                st.write("No context available.")
     else:
         assistant_response = "Error: Unable to load embeddings. Please check the embeddings folder."
         st.session_state.messages.append(
