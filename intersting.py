@@ -12,6 +12,23 @@ from streamlit_mic_recorder import speech_to_text
 # Styling Configuration
 st.set_page_config(page_title="BGC ChatBot", page_icon="🛢️", layout="wide")
 
+# Custom CSS for fixed input container at the bottom
+st.markdown(
+    """
+    <style>
+    .stTextInput, .stButton, .stTextArea {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80%;
+        z-index: 100;
+    }
+    </style>
+    """, 
+    unsafe_allow_html=True
+)
+
 # API Configuration
 groq_api_key = "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"
 google_api_key = "AIzaSyDdAiOdIa2I28sphYw36Genb4D--2IN1tU"
@@ -104,9 +121,7 @@ def record_voice(language="en"):
 # Voice input trigger
 voice_input = record_voice(language=input_lang_code)
 
-# Bottom input container
-
-# Process input
+# Bottom input container (centered)
 human_input = voice_input or st.text_input("", key="user_input", label_visibility="collapsed")
 
 if human_input:
