@@ -8,7 +8,6 @@ from langchain_community.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.memory import ConversationBufferMemory
 from streamlit_mic_recorder import speech_to_text
-import re
 
 # Styling Configuration
 st.set_page_config(page_title="BGC ChatBot", page_icon="🛢️", layout="wide")
@@ -74,6 +73,7 @@ prompt = ChatPromptTemplate.from_messages([
     ("system", "Answer questions based on the provided context about Basrah Gas Company but don't say in the answer about According to the provided text or pdf or bgc file just answer without tell us that."),
     MessagesPlaceholder(variable_name="history"),
     ("human", "{input}"),
+    ("system", "Context: {context}"),
 ])
 
 # Initialize Streamlit Sidebar
@@ -154,6 +154,7 @@ if human_input:
 
         response = retrieval_chain.invoke({
             "input": human_input,
+            "context": retriever.get_relevant_documents(human_input),
             "history": st.session_state.memory.chat_memory.messages
         })
 
