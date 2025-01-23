@@ -8,7 +8,6 @@ from langchain_community.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.memory import ConversationBufferMemory
 from streamlit_mic_recorder import speech_to_text
-import re
 
 # Styling Configuration
 st.set_page_config(page_title="BGC ChatBot", page_icon="🛢️", layout="wide")
@@ -43,14 +42,17 @@ st.markdown("""
     background-color: #6382FF;
 }
 #chat-input-container {
+    width: 60%;
+    margin: 0 auto;
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
     padding: 10px;
     background-color: #1E1E2E;
     border-top: 2px solid #4A6CF7;
     z-index: 999;
+    border-radius: 10px;
 }
 #chat-input-container input {
     flex: 1;
@@ -101,11 +103,6 @@ prompt = ChatPromptTemplate.from_template(
     """
 )
 
-# Initialize Sidebar
-with st.sidebar:
-    voice_language = st.selectbox("Voice Input Language", 
-        ["Arabic", "English", "French", "Spanish"])
-
 # Check API Keys and Initialize LLM
 if groq_api_key and google_api_key:
     os.environ["GOOGLE_API_KEY"] = google_api_key
@@ -150,9 +147,9 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # Determine language code for voice input
-input_lang_code = "ar" if voice_language == "Arabic" else voice_language.lower()[:2]
+input_lang_code = "ar" if st.sidebar.selectbox("Voice Input Language", ["Arabic", "English", "French", "Spanish"]) == "Arabic" else "en"
 
-# Voice and text input at the bottom
+# Voice and text input container
 st.markdown("""
 <div id="chat-input-container">
     <div style="display: flex; align-items: center;">
@@ -166,7 +163,7 @@ st.markdown("""
 voice_input = record_voice(language=input_lang_code)
 
 # Process input
-human_input = voice_input or st.text_input("Ask something about the document", key="user_input")
+human_input = voice_input or st.text_input("", key="user_input", label_visibility="collapsed")
 
 if human_input:
     st.session_state.messages.append({"role": "user", "content": human_input})
