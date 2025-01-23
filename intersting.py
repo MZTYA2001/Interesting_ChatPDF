@@ -12,52 +12,52 @@ from streamlit_mic_recorder import speech_to_text
 # Styling Configuration
 st.set_page_config(page_title="BGC ChatBot", page_icon="🛢️", layout="wide")
 
-st.markdown("""
-<style>
-.stApp {
-    background-color: #1E1E2E;
-    color: #E0E0E0;
-}
-.mic-button {
-    background-color: #4A6CF7;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    margin-left: 10px;
-}
-.mic-button:hover {
-    background-color: #6382FF;
-}
-#chat-input-container {
-    position: fixed;
-    bottom: 0;
-    left: 20%;
-    right: 20%;
-    padding: 10px;
-    background-color: #1E1E2E;
-    border-top: 2px solid #4A6CF7;
-    z-index: 999;
-    display: flex;
-    align-items: center;
-}
-#chat-input-container input {
-    flex: 1;
-    padding: 10px;
-    margin-right: 10px;
-    border-radius: 5px;
-    border: 2px solid #4A6CF7;
-    background-color: #2C2C3E;
-    color: white;
-}
-</style>
-""", unsafe_allow_html=True)
+# st.markdown("""
+# <style>
+# .stApp {
+#     background-color: #1E1E2E;
+#     color: #E0E0E0;
+# }
+# .mic-button {
+#     background-color: #4A6CF7;
+#     color: white;
+#     border: none;
+#     border-radius: 50%;
+#     width: 40px;
+#     height: 40px;
+#     display: flex;
+#     align-items: center;
+#     justify-content: center;
+#     cursor: pointer;
+#     transition: background-color 0.3s;
+#     margin-left: 10px;
+# }
+# .mic-button:hover {
+#     background-color: #6382FF;
+# }
+# #chat-input-container {
+#     position: fixed;
+#     bottom: 0;
+#     left: 20%;
+#     right: 20%;
+#     padding: 10px;
+#     background-color: #1E1E2E;
+#     border-top: 2px solid #4A6CF7;
+#     z-index: 999;
+#     display: flex;
+#     align-items: center;
+# }
+# #chat-input-container input {
+#     flex: 1;
+#     padding: 10px;
+#     margin-right: 10px;
+#     border-radius: 5px;
+#     border: 2px solid #4A6CF7;
+#     background-color: #2C2C3E;
+#     color: white;
+# }
+# </style>
+# """, unsafe_allow_html=True)
 
 # API Configuration
 groq_api_key = "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"
