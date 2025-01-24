@@ -168,7 +168,7 @@ def main():
     with st.sidebar:
         st.title("Settings")
         voice_language = st.selectbox("Voice Input Language", ["English", "Arabic"])
-        dark_mode = st.toggle("Dark Mode", value=False)
+        # dark_mode = st.toggle("Dark Mode", value=False)
 
     # Initialize vectors
     if "vectors" not in st.session_state:
