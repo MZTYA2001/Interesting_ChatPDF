@@ -18,25 +18,25 @@ GOOGLE_API_KEY = "AIzaSyDdAiOdIa2I28sphYw36Genb4D--2IN1tU"
 bgc_logo = Image.open("BGC Logo.png")
 
 # Styling Configuration
-st.set_page_config(page_title="Mohammed Al-Yaseen | BGC ChatBot", page_icon="🤖", layout="wide")
+st.set_page_config(page_title="Mohammed Al-Yaseen | BGC ChatBot", page_icon=bgc_logo, layout="wide")
 
 # Custom CSS 
 st.markdown("""
 <style>
 .stApp {
-    background-color: #FFFFFF;
-    color: #007ec9;
+    background-color: #0A0F24;
+    color: #FFFFFF;
 }
 .stTextInput > div > div > input {
-    background-color: #FFFFFF;
-    color: #007ec9;
-    border: 2px solid #007ec9;
+    background-color: #1E1E2E;
+    color: #FFFFFF;
+    border: 2px solid #4A6CF7;
     border-radius: 12px;
     padding: 12px;
     width: 100%;
 }
 .mic-button {
-    background-color: #007ec9;
+    background-color: #4A6CF7;
     color: white;
     border: none;
     border-radius: 50%;
@@ -50,7 +50,7 @@ st.markdown("""
     margin-left: 10px;
 }
 .mic-button:hover {
-    background-color: #005f9e;
+    background-color: #6382FF;
 }
 .sticky-input {
     position: fixed;
@@ -58,9 +58,9 @@ st.markdown("""
     left: 50%;
     transform: translateX(-50%);
     width: 80%;
-    background-color: #FFFFFF;
+    background-color: #0A0F24;
     padding: 10px;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
     z-index: 1000;
     display: flex;
     align-items: center;
@@ -81,29 +81,23 @@ st.markdown("""
     margin: 10px 0;
     padding: 12px;
     border-radius: 12px;
-    background-color: #FFFFFF;
-    border: 2px solid #007ec9;
+    background-color: #1E1E2E;
     max-width: 80%;
     word-wrap: break-word;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 .chat-message.user {
     margin-left: auto;
-    background-color: #007ec9;
-    color: white;
-    border: none;
+    background-color: #4A6CF7;
 }
 .chat-message.assistant {
     margin-right: auto;
-    background-color: #FFFFFF;
-    color: #007ec9;
-    border: 2px solid #007ec9;
+    background-color: #2C2C3E;
 }
 .supporting-info {
     margin-top: 20px;
     padding: 12px;
-    background-color: #FFFFFF;
-    border: 2px solid #007ec9;
+    background-color: #1E1E2E;
     border-radius: 12px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
@@ -168,7 +162,7 @@ def main():
     with st.sidebar:
         st.title("Settings")
         voice_language = st.selectbox("Voice Input Language", ["English", "Arabic"])
-        # dark_mode = st.toggle("Dark Mode", value=False)
+        dark_mode = st.toggle("Dark Mode", value=True)
 
     # Initialize vectors
     if "vectors" not in st.session_state:
@@ -181,7 +175,7 @@ def main():
                     embeddings,
                     allow_dangerous_deserialization=True
                 )
-                # st.sidebar.write("Embeddings loaded successfully 🎉")
+                st.sidebar.write("Embeddings loaded successfully 🎉")
             except Exception as e:
                 st.error(f"Error loading embeddings: {str(e)}")
                 st.session_state.vectors = None
@@ -198,7 +192,7 @@ def main():
     st.image(bgc_logo, width=200)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    st.title("Mohammed Al-Yaseen | BGC ChatBot")
+    st.title("DeepSeek ChatBot 🤖")
 
     # Initialize chat history
     if "messages" not in st.session_state:
