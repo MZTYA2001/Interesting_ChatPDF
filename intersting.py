@@ -266,4 +266,12 @@ def main():
             with st.chat_message("assistant"):
                 st.markdown(assistant_response)
 
-            # Supporting
+            # Supporting info
+            st.markdown('<div class="supporting-info">', unsafe_allow_html=True)
+            st.write(response["source_documents"])
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    main()
