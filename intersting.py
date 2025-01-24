@@ -10,13 +10,104 @@ from langchain.memory import ConversationBufferMemory
 from streamlit_mic_recorder import speech_to_text
 import time
 
+# API Keys (Replace with your actual keys)
+GROQ_API_KEY = "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"
+GOOGLE_API_KEY = "AIzaSyDdAiOdIa2I28sphYw36Genb4D--2IN1tU"
+
 # Styling Configuration
 st.set_page_config(page_title="DeepSeek ChatBot", page_icon="🤖", layout="wide")
 
-# Custom CSS (previous CSS remains the same)
+# Custom CSS 
 st.markdown("""
 <style>
-... (previous CSS remains unchanged)
+.stApp {
+    background-color: #0A0F24;
+    color: #FFFFFF;
+}
+.stTextInput > div > div > input {
+    background-color: #1E1E2E;
+    color: #FFFFFF;
+    border: 2px solid #4A6CF7;
+    border-radius: 12px;
+    padding: 12px;
+    width: 100%;
+}
+.mic-button {
+    background-color: #4A6CF7;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-left: 10px;
+}
+.mic-button:hover {
+    background-color: #6382FF;
+}
+.sticky-input {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    background-color: #0A0F24;
+    padding: 10px;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.input-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+.chat-container {
+    max-height: calc(100vh - 250px);
+    overflow-y: auto;
+    padding-bottom: 150px;
+}
+.chat-message {
+    margin: 10px 0;
+    padding: 12px;
+    border-radius: 12px;
+    background-color: #1E1E2E;
+    max-width: 80%;
+    word-wrap: break-word;
+}
+.chat-message.user {
+    margin-left: auto;
+    background-color: #4A6CF7;
+}
+.chat-message.assistant {
+    margin-right: auto;
+    background-color: #2C2C3E;
+}
+.supporting-info {
+    margin-top: 20px;
+    padding: 12px;
+    background-color: #1E1E2E;
+    border-radius: 12px;
+}
+.clear-button {
+    background-color: #FF4B4B;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+.clear-button:hover {
+    background-color: #FF6B6B;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -28,23 +119,6 @@ prompt = ChatPromptTemplate.from_messages([
     ("system", "Context: {context}"),
 ])
 
-def init_llm():
-    """Initialize LLM with error handling"""
-    # Use environment variables or Streamlit secrets
-    groq_api_key = os.getenv("GROQ_API_KEY") or st.secrets.get("GROQ_API_KEY", "")
-    google_api_key = os.getenv("GOOGLE_API_KEY") or st.secrets.get("GOOGLE_API_KEY", "")
-
-    if not groq_api_key or not google_api_key:
-        st.error("Missing API keys. Please set GROQ_API_KEY and GOOGLE_API_KEY.")
-        return None
-
-    try:
-        os.environ["GOOGLE_API_KEY"] = google_api_key
-        return ChatGroq(groq_api_key=groq_api_key, model_name="gemma2-9b-it")
-    except Exception as e:
-        st.error(f"Error initializing LLM: {e}")
-        return None
-
 def record_voice(language="en"):
     text = speech_to_text(
         start_prompt="🎤",
@@ -54,6 +128,19 @@ def record_voice(language="en"):
         just_once=True,
     )
     return text if text else None
+
+def init_llm():
+    """Initialize LLM with error handling"""
+    if not GROQ_API_KEY or not GOOGLE_API_KEY:
+        st.error("Missing API keys. Please set GROQ_API_KEY and GOOGLE_API_KEY.")
+        return None
+
+    try:
+        os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
+        return ChatGroq(groq_api_key=GROQ_API_KEY, model_name="gemma2-9b-it")
+    except Exception as e:
+        st.error(f"Error initializing LLM: {e}")
+        return None
 
 def main():
     # Initialize LLM before using it
