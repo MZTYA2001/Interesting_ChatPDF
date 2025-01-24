@@ -8,11 +8,14 @@ from langchain_community.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.memory import ConversationBufferMemory
 from streamlit_mic_recorder import speech_to_text
-import time
+from PIL import Image
 
 # API Keys (Replace with your actual keys)
 GROQ_API_KEY = "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"
 GOOGLE_API_KEY = "AIzaSyDdAiOdIa2I28sphYw36Genb4D--2IN1tU"
+
+# Load BGC Logo
+bgc_logo = Image.open("BGC Logo.png")
 
 # Styling Configuration
 st.set_page_config(page_title="Mohammed Al-Yaseen | BGC ChatBot", page_icon="🤖", layout="wide")
@@ -21,7 +24,7 @@ st.set_page_config(page_title="Mohammed Al-Yaseen | BGC ChatBot", page_icon="�
 st.markdown("""
 <style>
 .stApp {
-    background-color: #0A0F24;
+    background: linear-gradient(135deg, #0A0F24, #1A1F34);
     color: #FFFFFF;
 }
 .stTextInput > div > div > input {
@@ -78,23 +81,25 @@ st.markdown("""
     margin: 10px 0;
     padding: 12px;
     border-radius: 12px;
-    background-color: #1E1E2E;
+    background: linear-gradient(135deg, #1E1E2E, #2C2C3E);
     max-width: 80%;
     word-wrap: break-word;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 .chat-message.user {
     margin-left: auto;
-    background-color: #4A6CF7;
+    background: linear-gradient(135deg, #4A6CF7, #6382FF);
 }
 .chat-message.assistant {
     margin-right: auto;
-    background-color: #2C2C3E;
+    background: linear-gradient(135deg, #2C2C3E, #3C3C4E);
 }
 .supporting-info {
     margin-top: 20px;
     padding: 12px;
-    background-color: #1E1E2E;
+    background: linear-gradient(135deg, #1E1E2E, #2C2C3E);
     border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 .clear-button {
     background-color: #FF4B4B;
@@ -107,6 +112,11 @@ st.markdown("""
 }
 .clear-button:hover {
     background-color: #FF6B6B;
+}
+.logo-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -176,6 +186,11 @@ def main():
             memory_key="history",
             return_messages=True
         )
+
+    # Display BGC Logo
+    st.markdown('<div class="logo-container">', unsafe_allow_html=True)
+    st.image(bgc_logo, width=200)
+    st.markdown('</div>', unsafe_allow_html=True)
 
     st.title("DeepSeek ChatBot 🤖")
 
