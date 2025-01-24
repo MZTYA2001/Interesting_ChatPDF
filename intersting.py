@@ -76,6 +76,7 @@ st.markdown("""
     max-height: calc(100vh - 250px);
     overflow-y: auto;
     padding-bottom: 150px;
+    margin-bottom: 150px; /* Add margin to prevent overlap */
 }
 .chat-message {
     margin: 10px 0;
