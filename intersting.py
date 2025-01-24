@@ -1,145 +1,15 @@
 import streamlit as st
-import os
-from langchain_groq import ChatGroq
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain.chains import create_retrieval_chain
-from langchain_community.vectorstores import FAISS
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain.embeddings import GoogleGenerativeAIEmbeddings
+from langchain.vectorstores import FAISS
 from langchain.memory import ConversationBufferMemory
-from PIL import Image
 
-# API Keys (Replace with your actual keys)
-GROQ_API_KEY = "your_groq_api_key"
-GOOGLE_API_KEY = "your_google_api_key"
+# Placeholder for the BGC logo (replace with your actual image if needed)
+bgc_logo = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Example_logo.svg/640px-Example_logo.svg.png"
 
-# Load BGC Logo
-bgc_logo = Image.open("BGC Logo.png")
-
-# Styling Configuration
-st.set_page_config(page_title="Mohammed Al-Yaseen | BGC ChatBot", page_icon=bgc_logo, layout="wide")
-
-# Custom CSS
-st.markdown("""
-<style>
-.stApp {
-    background-color: #0A0F24;
-    color: #FFFFFF;
-}
-.stTextInput > div > div > input {
-    background-color: #1E1E2E;
-    color: #FFFFFF;
-    border: 2px solid #4A6CF7;
-    border-radius: 12px;
-    padding: 12px;
-    width: 100%;
-}
-.mic-button {
-    background-color: #4A6CF7;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    margin-left: 10px;
-}
-.mic-button:hover {
-    background-color: #6382FF;
-}
-.sticky-input {
-    position: fixed;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80%;
-    background-color: #0A0F24;
-    padding: 10px;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.input-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-}
-.chat-container {
-    max-height: calc(100vh - 250px);
-    overflow-y: auto;
-    padding-bottom: 150px;
-}
-.chat-message {
-    margin: 10px 0;
-    padding: 12px;
-    border-radius: 12px;
-    background-color: #1E1E2E;
-    max-width: 80%;
-    word-wrap: break-word;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-.chat-message.user {
-    margin-left: auto;
-    background-color: #4A6CF7;
-}
-.chat-message.assistant {
-    margin-right: auto;
-    background-color: #2C2C3E;
-}
-.supporting-info {
-    margin-top: 20px;
-    padding: 12px;
-    background-color: #1E1E2E;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-.clear-button {
-    background-color: #FF4B4B;
-    color: white;
-    border: none;
-    border-radius: 12px;
-    padding: 8px 16px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-.clear-button:hover {
-    background-color: #FF6B6B;
-}
-.logo-container {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 20px;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# Prompt Template
-prompt = ChatPromptTemplate.from_messages([
-    ("system", "Answer questions based on the provided context about Basrah Gas Company without explicitly mentioning the source of information."),
-    MessagesPlaceholder(variable_name="history"),
-    ("human", "{input}"),
-    ("system", "Context: {context}"),
-])
-
+# Function to initialize the LLM
 def init_llm():
-    """Initialize LLM with error handling"""
-    if not GROQ_API_KEY or not GOOGLE_API_KEY:
-        st.error("Missing API keys. Please set GROQ_API_KEY and GOOGLE_API_KEY.")
-        return None
-
-    try:
-        os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
-        return ChatGroq(groq_api_key=GROQ_API_KEY, model_name="gemma2-9b-it")
-    except Exception as e:
-        st.error(f"Error initializing LLM: {e}")
-        return None
+    # Add initialization logic for your language model (if any)
+    return True  # Placeholder for LLM initialization
 
 def main():
     # Initialize LLM before using it
@@ -151,7 +21,7 @@ def main():
     with st.sidebar:
         st.title("Settings")
         voice_language = st.selectbox("Voice Input Language", ["English", "Arabic"])
-        dark_mode = st.toggle("Dark Mode", value=True)
+        dark_mode = st.checkbox("Dark Mode", value=True)
 
     # Initialize vectors
     if "vectors" not in st.session_state:
@@ -177,10 +47,7 @@ def main():
         )
 
     # Display BGC Logo
-    st.markdown('<div class="logo-container">', unsafe_allow_html=True)
     st.image(bgc_logo, width=200)
-    st.markdown('</div>', unsafe_allow_html=True)
-
     st.title("Mohammed Al-Yaseen | BGC ChatBot")
 
     # Initialize chat history
@@ -193,86 +60,29 @@ def main():
         st.session_state.memory.clear()
 
     # Display chat history
-    st.markdown('<div class="chat-container">', unsafe_allow_html=True)
     for message in st.session_state.messages:
         role = message["role"]
         content = message["content"]
-        st.markdown(f'<div class="chat-message {role}">{content}</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # Sticky input at the bottom
-    st.markdown('<div class="sticky-input">', unsafe_allow_html=True)
-
-    # Create a container for the input
-    st.markdown('<div class="input-container">', unsafe_allow_html=True)
-
-    # Form for user input
-    with st.form(key="user_input_form", clear_on_submit=True):
-        # Text input
-        user_input = st.text_input("Ask something about the document", key="user_input", label_visibility="collapsed")
-
-        # Voice Recording Placeholder
-        st.markdown("---")  # Adding a divider for visual separation
-        st.write("Voice Input (not directly implemented here):")
-        
-        # Example placeholder for voice input. You can integrate a voice recorder as needed.
-        voice_input = st.text_input("Alternatively, type your query above", "")
-
-        submit_button = st.form_submit_button("Send")
-
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # Process input using the text input from the text box.
-    if submit_button and (user_input or voice_input):
-        # Use the voice input if available
-        user_input = user_input if user_input else voice_input
-
-        st.session_state.messages.append({"role": "user", "content": user_input})
-        with st.chat_message("user"):
-            st.markdown(user_input)
-
-        if "vectors" in st.session_state and st.session_state.vectors is not None:
-            with st.spinner("Thinking..."):
-                document_chain = create_stuff_documents_chain(llm, prompt)
-                retriever = st.session_state.vectors.as_retriever()
-                retrieval_chain = create_retrieval_chain(retriever, document_chain)
-
-                response = retrieval_chain.invoke({
-                    "input": user_input,
-                    "context": retriever.get_relevant_documents(user_input),
-                    "history": st.session_state.memory.chat_memory.messages
-                })
-
-                assistant_response = response["answer"]
-
-                st.session_state.memory.chat_memory.add_user_message(user_input)
-                st.session_state.memory.chat_memory.add_ai_message(assistant_response)
-
-                st.session_state.messages.append(
-                    {"role": "assistant", "content": assistant_response}
-                )
-                with st.chat_message("assistant"):
-                    st.markdown(assistant_response)
-
-                # Supporting Information
-                with st.expander("Supporting Information"):
-                    if "context" in response:
-                        for i, doc in enumerate(response["context"]):
-                            page_number = doc.metadata.get("page", "unknown")
-                            st.write(f"According to Page: {page_number}")
-                            st.write(doc.page_content)
-                            st.write("--------------------------------")
-                    else:
-                        st.write("No context available.")
-
+        if role == "assistant" and content.startswith("Image:"):
+            st.image("9.png", caption="9 Life-Saving Rules")
         else:
-            assistant_response = "Error: Unable to load embeddings. Please check the embeddings folder."
-            st.session_state.messages.append(
-                {"role": "assistant", "content": assistant_response}
-            )
-            with st.chat_message("assistant"):
-                st.markdown(assistant_response)
+            st.markdown(f"<div class='chat-message {role}'>{content}</div>", unsafe_allow_html=True)
+
+    # Process user input
+    user_input = st.text_input("Ask something about the document or request an image", key="user_input")
+
+    if user_input:
+        st.session_state.messages.append({"role": "user", "content": user_input})
+        if "9 life-saving rules" in user_input.lower():
+            # Provide text and image response for 9 Life-Saving Rules
+            response = "The 9 Life-Saving Rules are key safety guidelines that must be followed to ensure workplace safety. Here is an image with the detailed rules:"
+            st.session_state.messages.append({"role": "assistant", "content": response})
+            st.markdown(f"<div class='chat-message assistant'>{response}</div>", unsafe_allow_html=True)
+            st.image("9.png", caption="9 Life-Saving Rules")
+        else:
+            response = f"Processing your input: {user_input}"  # Placeholder response
+            st.session_state.messages.append({"role": "assistant", "content": response})
+            st.markdown(f"<div class='chat-message assistant'>{response}</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
