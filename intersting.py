@@ -248,7 +248,7 @@ def main():
                 st.session_state.messages.append(
                     {"role": "assistant", "content": assistant_response}
                 )
-                st.markdown(f'<div class="chat-message assistant">{assistant_response}</div>', unsafe_allow_html=True)
+                # st.markdown(f'<div class="chat-message assistant">{assistant_response}</div>', unsafe_allow_html=True)
 
                 # Supporting Information
                 with st.expander("Supporting Information"):
