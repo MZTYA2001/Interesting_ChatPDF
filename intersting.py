@@ -7,7 +7,6 @@ from langchain.chains import create_retrieval_chain
 from langchain_community.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.memory import ConversationBufferMemory
-from streamlit_mic_recorder import mic_ui
 from PIL import Image
 
 # API Keys (Replace with your actual keys)
@@ -204,7 +203,7 @@ def main():
     # Sticky input at the bottom
     st.markdown('<div class="sticky-input">', unsafe_allow_html=True)
 
-    # Create a container for the input and voice button
+    # Create a container for the input
     st.markdown('<div class="input-container">', unsafe_allow_html=True)
 
     # Form for user input
@@ -212,23 +211,23 @@ def main():
         # Text input
         user_input = st.text_input("Ask something about the document", key="user_input", label_visibility="collapsed")
 
-        # Microphone recording button
-        recorded_audio = mic_ui(start_prompt="🎤 Recording...", stop_prompt="⏹️ Stop Recording")
+        # Voice Recording Placeholder
+        st.markdown("---")  # Adding a divider for visual separation
+        st.write("Voice Input (not directly implemented here):")
+        
+        # Example placeholder for voice input. You can integrate a voice recorder as needed.
+        voice_input = st.text_input("Alternatively, type your query above", "")
 
         submit_button = st.form_submit_button("Send")
 
     st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Process input
-    if recorded_audio:
-        user_input = recorded_audio
-
-    if submit_button and (user_input or recorded_audio):
+    # Process input using the text input from the text box.
+    if submit_button and (user_input or voice_input):
         # Use the voice input if available
-        if recorded_audio:
-            user_input = recorded_audio
-        
+        user_input = user_input if user_input else voice_input
+
         st.session_state.messages.append({"role": "user", "content": user_input})
         with st.chat_message("user"):
             st.markdown(user_input)
