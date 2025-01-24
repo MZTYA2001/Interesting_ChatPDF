@@ -108,8 +108,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # API Configuration
-groq_api_key = "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"
-google_api_key = "AIzaSyDdAiOdIa2I28sphYw36Genb4D--2IN1tU"
+groq_api_key = st.secrets.get("GROQ_API_KEY", "")
+google_api_key = st.secrets.get("GOOGLE_API_KEY", "")
 
 def record_voice(language="en"):
     text = speech_to_text(
@@ -123,138 +123,139 @@ def record_voice(language="en"):
 
 # Prompt Template
 prompt = ChatPromptTemplate.from_messages([
-    ("system", "Answer questions based on the provided context about Basrah Gas Company but don't say in the answer about According to the provided text or pdf or bgc file just answer without tell us that."),
+    ("system", "Answer questions based on the provided context about Basrah Gas Company without explicitly mentioning the source of information."),
     MessagesPlaceholder(variable_name="history"),
     ("human", "{input}"),
     ("system", "Context: {context}"),
 ])
 
-# Initialize Streamlit Sidebar
-with st.sidebar:
-    st.title("Settings")
-    voice_language = st.selectbox("Voice Input Language", ["English", "Arabic"])
-    dark_mode = st.toggle("Dark Mode", value=True)
+def main():
+    # Initialize Streamlit Sidebar
+    with st.sidebar:
+        st.title("Settings")
+        voice_language = st.selectbox("Voice Input Language", ["English", "Arabic"])
+        dark_mode = st.toggle("Dark Mode", value=True)
 
-# Check API Keys and Initialize LLM
-if groq_api_key and google_api_key:
-    os.environ["GOOGLE_API_KEY"] = google_api_key
-    llm = ChatGroq(groq_api_key=groq_api_key, model_name="gemma2-9b-it")
+    # Check API Keys and Initialize LLM
+    if groq_api_key and google_api_key:
+        os.environ["GOOGLE_API_KEY"] = google_api_key
+        llm = ChatGroq(groq_api_key=groq_api_key, model_name="gemma2-9b-it")
 
-    # Initialize memory
-    if "memory" not in st.session_state:
-        st.session_state.memory = ConversationBufferMemory(
-            memory_key="history",
-            return_messages=True
-        )
+        # Initialize memory
+        if "memory" not in st.session_state:
+            st.session_state.memory = ConversationBufferMemory(
+                memory_key="history",
+                return_messages=True
+            )
 
-    # Initialize vectors
-    if "vectors" not in st.session_state:
-        with st.spinner("Loading embeddings... Please wait."):
-            embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-            embeddings_path = "embeddings"
-            try:
-                st.session_state.vectors = FAISS.load_local(
-                    embeddings_path,
-                    embeddings,
-                    allow_dangerous_deserialization=True
+        # Initialize vectors
+        if "vectors" not in st.session_state:
+            with st.spinner("Loading embeddings... Please wait."):
+                embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+                embeddings_path = "embeddings"
+                try:
+                    st.session_state.vectors = FAISS.load_local(
+                        embeddings_path,
+                        embeddings,
+                        allow_dangerous_deserialization=True
+                    )
+                    st.sidebar.write("Embeddings loaded successfully 🎉")
+                except Exception as e:
+                    st.error(f"Error loading embeddings: {str(e)}")
+                    st.session_state.vectors = None
+    else:
+        st.error("Please enter both API keys to proceed.")
+
+    st.title("DeepSeek ChatBot 🤖")
+
+    # Initialize chat history
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    # Clear chat history
+    if st.button("Clear Chat History", key="clear-button"):
+        st.session_state.messages = []
+        st.session_state.memory.clear()
+
+    # Display chat history
+    st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+    for message in st.session_state.messages:
+        role = message["role"]
+        content = message["content"]
+        st.markdown(f'<div class="chat-message {role}">{content}</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Process user input
+    input_lang_code = "ar" if voice_language == "Arabic" else voice_language.lower()[:2]
+
+    # Sticky input at the bottom
+    st.markdown('<div class="sticky-input">', unsafe_allow_html=True)
+
+    # Create a container for the input and voice button
+    st.markdown('<div class="input-container">', unsafe_allow_html=True)
+
+    # Text input and voice button in the same row
+    col1, col2 = st.columns([0.85, 0.15])
+
+    with col1:
+        user_input = st.text_input("Ask something about the document", key="user_input", label_visibility="collapsed")
+
+    with col2:
+        voice_input = record_voice(language=input_lang_code)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Process input
+    if voice_input:
+        user_input = voice_input
+
+    if user_input:
+        st.session_state.messages.append({"role": "user", "content": user_input})
+        with st.chat_message("user"):
+            st.markdown(user_input)
+
+        if "vectors" in st.session_state and st.session_state.vectors is not None:
+            with st.spinner("Thinking..."):
+                document_chain = create_stuff_documents_chain(llm, prompt)
+                retriever = st.session_state.vectors.as_retriever()
+                retrieval_chain = create_retrieval_chain(retriever, document_chain)
+
+                response = retrieval_chain.invoke({
+                    "input": user_input,
+                    "context": retriever.get_relevant_documents(user_input),
+                    "history": st.session_state.memory.chat_memory.messages
+                })
+
+                assistant_response = response["answer"]
+
+                st.session_state.memory.chat_memory.add_user_message(user_input)
+                st.session_state.memory.chat_memory.add_ai_message(assistant_response)
+
+                st.session_state.messages.append(
+                    {"role": "assistant", "content": assistant_response}
                 )
-                st.sidebar.write("Embeddings loaded successfully 🎉")
-            except Exception as e:
-                st.error(f"Error loading embeddings: {str(e)}")
-                st.session_state.vectors = None
-else:
-    st.error("Please enter both API keys to proceed.")
+                with st.chat_message("assistant"):
+                    st.markdown(assistant_response)
 
-st.title("DeepSeek ChatBot 🤖")
+                # Supporting Information
+                with st.expander("Supporting Information"):
+                    if "context" in response:
+                        for i, doc in enumerate(response["context"]):
+                            page_number = doc.metadata.get("page", "unknown")
+                            st.write(f"**Document {i+1}** - Page: {page_number}")
+                            st.write(doc.page_content)
+                            st.write("--------------------------------")
+                    else:
+                        st.write("No context available.")
 
-# Initialize chat history
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-# Clear chat history
-if st.button("Clear Chat History", key="clear-button"):
-    st.session_state.messages = []
-    st.session_state.memory.clear()
-
-# Display chat history
-st.markdown('<div class="chat-container">', unsafe_allow_html=True)
-for message in st.session_state.messages:
-    role = message["role"]
-    content = message["content"]
-    st.markdown(f'<div class="chat-message {role}">{content}</div>', unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
-
-# Process user input
-input_lang_code = "ar" if voice_language == "Arabic" else voice_language.lower()[:2]
-
-# Sticky input at the bottom
-st.markdown('<div class="sticky-input">', unsafe_allow_html=True)
-
-# Create a container for the input and voice button
-st.markdown('<div class="input-container">', unsafe_allow_html=True)
-
-# Text input and voice button in the same row
-col1, col2 = st.columns([0.85, 0.15])
-
-with col1:
-    # Use a custom key for the text input
-    user_input = st.text_input("Ask something about the document", key="chat_input", label_visibility="collapsed")
-
-with col2:
-    voice_input = record_voice(language=input_lang_code)
-
-st.markdown('</div>', unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
-
-# Process input
-if voice_input:
-    user_input = voice_input
-
-if user_input:
-    st.session_state.messages.append({"role": "user", "content": user_input})
-    with st.chat_message("user"):
-        st.markdown(user_input)
-
-    if "vectors" in st.session_state and st.session_state.vectors is not None:
-        with st.spinner("Thinking..."):
-            document_chain = create_stuff_documents_chain(llm, prompt)
-            retriever = st.session_state.vectors.as_retriever()
-            retrieval_chain = create_retrieval_chain(retriever, document_chain)
-
-            response = retrieval_chain.invoke({
-                "input": user_input,
-                "context": retriever.get_relevant_documents(user_input),
-                "history": st.session_state.memory.chat_memory.messages
-            })
-
-            assistant_response = response["answer"]
-
-            st.session_state.memory.chat_memory.add_user_message(user_input)
-            st.session_state.memory.chat_memory.add_ai_message(assistant_response)
-
+        else:
+            assistant_response = "Error: Unable to load embeddings. Please check the embeddings folder."
             st.session_state.messages.append(
                 {"role": "assistant", "content": assistant_response}
             )
             with st.chat_message("assistant"):
                 st.markdown(assistant_response)
 
-            # Supporting Information
-            with st.expander("Supporting Information"):
-                if "context" in response:
-                    for i, doc in enumerate(response["context"]):
-                        page_number = doc.metadata.get("page", "unknown")
-                        st.write(f"**Document {i+1}** - Page: {page_number}")
-                        st.write(doc.page_content)
-                        st.write("--------------------------------")
-                else:
-                    st.write("No context available.")
-
-            # Clear the input field after submission
-            st.session_state.chat_input = ""
-    else:
-        assistant_response = "Error: Unable to load embeddings. Please check the embeddings folder."
-        st.session_state.messages.append(
-            {"role": "assistant", "content": assistant_response}
-        )
-        with st.chat_message("assistant"):
-            st.markdown(assistant_response)
+if __name__ == "__main__":
+    main()
