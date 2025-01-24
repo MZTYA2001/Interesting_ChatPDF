@@ -289,7 +289,7 @@ def main():
     # Reset processed_input flag after processing
     if "processed_input" in st.session_state:
         del st.session_state.processed_input
-        # Clear the input field
+        # Use a workaround to clear the input field
         st.session_state.user_input = ""
 
 if __name__ == "__main__":
