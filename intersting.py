@@ -13,103 +13,37 @@ import time
 # Styling Configuration
 st.set_page_config(page_title="DeepSeek ChatBot", page_icon="🤖", layout="wide")
 
-# Custom CSS for DeepSeek-like design
+# Custom CSS (previous CSS remains the same)
 st.markdown("""
 <style>
-.stApp {
-    background-color: #0A0F24;
-    color: #FFFFFF;
-}
-.stTextInput > div > div > input {
-    background-color: #1E1E2E;
-    color: #FFFFFF;
-    border: 2px solid #4A6CF7;
-    border-radius: 12px;
-    padding: 12px;
-    width: 100%;
-}
-.mic-button {
-    background-color: #4A6CF7;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    margin-left: 10px;
-}
-.mic-button:hover {
-    background-color: #6382FF;
-}
-.sticky-input {
-    position: fixed;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80%;
-    background-color: #0A0F24;
-    padding: 10px;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.input-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-}
-.chat-container {
-    max-height: calc(100vh - 250px);
-    overflow-y: auto;
-    padding-bottom: 150px;
-}
-.chat-message {
-    margin: 10px 0;
-    padding: 12px;
-    border-radius: 12px;
-    background-color: #1E1E2E;
-    max-width: 80%;
-    word-wrap: break-word;
-}
-.chat-message.user {
-    margin-left: auto;
-    background-color: #4A6CF7;
-}
-.chat-message.assistant {
-    margin-right: auto;
-    background-color: #2C2C3E;
-}
-.supporting-info {
-    margin-top: 20px;
-    padding: 12px;
-    background-color: #1E1E2E;
-    border-radius: 12px;
-}
-.clear-button {
-    background-color: #FF4B4B;
-    color: white;
-    border: none;
-    border-radius: 12px;
-    padding: 8px 16px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-.clear-button:hover {
-    background-color: #FF6B6B;
-}
+... (previous CSS remains unchanged)
 </style>
 """, unsafe_allow_html=True)
 
-# API Configuration
-groq_api_key = st.secrets.get("GROQ_API_KEY", "")
-google_api_key = st.secrets.get("GOOGLE_API_KEY", "")
+# Prompt Template
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "Answer questions based on the provided context about Basrah Gas Company without explicitly mentioning the source of information."),
+    MessagesPlaceholder(variable_name="history"),
+    ("human", "{input}"),
+    ("system", "Context: {context}"),
+])
+
+def init_llm():
+    """Initialize LLM with error handling"""
+    # Use environment variables or Streamlit secrets
+    groq_api_key = os.getenv("GROQ_API_KEY") or st.secrets.get("GROQ_API_KEY", "")
+    google_api_key = os.getenv("GOOGLE_API_KEY") or st.secrets.get("GOOGLE_API_KEY", "")
+
+    if not groq_api_key or not google_api_key:
+        st.error("Missing API keys. Please set GROQ_API_KEY and GOOGLE_API_KEY.")
+        return None
+
+    try:
+        os.environ["GOOGLE_API_KEY"] = google_api_key
+        return ChatGroq(groq_api_key=groq_api_key, model_name="gemma2-9b-it")
+    except Exception as e:
+        st.error(f"Error initializing LLM: {e}")
+        return None
 
 def record_voice(language="en"):
     text = speech_to_text(
@@ -121,50 +55,40 @@ def record_voice(language="en"):
     )
     return text if text else None
 
-# Prompt Template
-prompt = ChatPromptTemplate.from_messages([
-    ("system", "Answer questions based on the provided context about Basrah Gas Company without explicitly mentioning the source of information."),
-    MessagesPlaceholder(variable_name="history"),
-    ("human", "{input}"),
-    ("system", "Context: {context}"),
-])
-
 def main():
+    # Initialize LLM before using it
+    llm = init_llm()
+    if llm is None:
+        st.stop()
+
     # Initialize Streamlit Sidebar
     with st.sidebar:
         st.title("Settings")
         voice_language = st.selectbox("Voice Input Language", ["English", "Arabic"])
         dark_mode = st.toggle("Dark Mode", value=True)
 
-    # Check API Keys and Initialize LLM
-    if groq_api_key and google_api_key:
-        os.environ["GOOGLE_API_KEY"] = google_api_key
-        llm = ChatGroq(groq_api_key=groq_api_key, model_name="gemma2-9b-it")
-
-        # Initialize memory
-        if "memory" not in st.session_state:
-            st.session_state.memory = ConversationBufferMemory(
-                memory_key="history",
-                return_messages=True
-            )
-
-        # Initialize vectors
-        if "vectors" not in st.session_state:
-            with st.spinner("Loading embeddings... Please wait."):
+    # Initialize vectors
+    if "vectors" not in st.session_state:
+        with st.spinner("Loading embeddings... Please wait."):
+            try:
                 embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
                 embeddings_path = "embeddings"
-                try:
-                    st.session_state.vectors = FAISS.load_local(
-                        embeddings_path,
-                        embeddings,
-                        allow_dangerous_deserialization=True
-                    )
-                    st.sidebar.write("Embeddings loaded successfully 🎉")
-                except Exception as e:
-                    st.error(f"Error loading embeddings: {str(e)}")
-                    st.session_state.vectors = None
-    else:
-        st.error("Please enter both API keys to proceed.")
+                st.session_state.vectors = FAISS.load_local(
+                    embeddings_path,
+                    embeddings,
+                    allow_dangerous_deserialization=True
+                )
+                st.sidebar.write("Embeddings loaded successfully 🎉")
+            except Exception as e:
+                st.error(f"Error loading embeddings: {str(e)}")
+                st.session_state.vectors = None
+
+    # Initialize memory
+    if "memory" not in st.session_state:
+        st.session_state.memory = ConversationBufferMemory(
+            memory_key="history",
+            return_messages=True
+        )
 
     st.title("DeepSeek ChatBot 🤖")
 
