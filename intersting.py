@@ -133,8 +133,8 @@ prompt = ChatPromptTemplate.from_messages([
 # Voice Recording Function
 def record_voice(language="en"):
     text = speech_to_text(
-        start_prompt="🎤 Click and speak to ask a question",
-        stop_prompt="⚠️ Stop recording 🚨",
+        start_prompt="🎤",  # Mic icon
+        stop_prompt="⏹️",  # Stop icon
         language=language,
         use_container_width=True,
         just_once=True,
@@ -222,65 +222,29 @@ def main():
     # Create a container for the input and voice button
     st.markdown('<div class="input-container">', unsafe_allow_html=True)
 
-    # Voice button (outside the form)
-    voice_input = record_voice(language=input_lang_code)
-    if voice_input:
-        st.session_state.messages.append({"role": "user", "content": voice_input})
-        with st.chat_message("user"):
-            st.markdown(voice_input)
-
-        if "vectors" in st.session_state and st.session_state.vectors is not None:
-            with st.spinner("Thinking..."):
-                document_chain = create_stuff_documents_chain(llm, prompt)
-                retriever = st.session_state.vectors.as_retriever()
-                retrieval_chain = create_retrieval_chain(retriever, document_chain)
-
-                response = retrieval_chain.invoke({
-                    "input": voice_input,
-                    "context": retriever.get_relevant_documents(voice_input),
-                    "history": st.session_state.memory.chat_memory.messages
-                })
-
-                assistant_response = response["answer"]
-
-                st.session_state.memory.chat_memory.add_user_message(voice_input)
-                st.session_state.memory.chat_memory.add_ai_message(assistant_response)
-
-                st.session_state.messages.append(
-                    {"role": "assistant", "content": assistant_response}
-                )
-                with st.chat_message("assistant"):
-                    st.markdown(assistant_response)
-
-                # Supporting Information
-                with st.expander("Supporting Information"):
-                    if "context" in response:
-                        for i, doc in enumerate(response["context"]):
-                            page_number = doc.metadata.get("page", "unknown")
-                            st.write(f"According to Page: {page_number}")
-                            st.write(doc.page_content)
-                            st.write("--------------------------------")
-                    else:
-                        st.write("No context available.")
-
-        else:
-            assistant_response = "Error: Unable to load embeddings. Please check the embeddings folder."
-            st.session_state.messages.append(
-                {"role": "assistant", "content": assistant_response}
-            )
-            with st.chat_message("assistant"):
-                st.markdown(assistant_response)
-
-    # Form for text input
+    # Form for text input and voice button
     with st.form(key="user_input_form", clear_on_submit=True):
-        user_input = st.text_input("Ask something about the document", key="user_input", label_visibility="collapsed")
+        col1, col2 = st.columns([0.85, 0.15])  # 85% for text input, 15% for voice button
+
+        with col1:
+            user_input = st.text_input("Ask something about the document", key="user_input", label_visibility="collapsed")
+
+        with col2:
+            if st.form_submit_button("🎤", use_container_width=True):  # Mic icon
+                voice_input = record_voice(language=input_lang_code)
+            else:
+                voice_input = None
+
         submit_button = st.form_submit_button("Send")
 
     st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Process text input
-    if submit_button and user_input:
+    # Process input
+    if voice_input:
+        user_input = voice_input
+
+    if submit_button and (user_input or voice_input):
         st.session_state.messages.append({"role": "user", "content": user_input})
         with st.chat_message("user"):
             st.markdown(user_input)
