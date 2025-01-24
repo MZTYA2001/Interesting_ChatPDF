@@ -15,7 +15,7 @@ GROQ_API_KEY = "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"
 GOOGLE_API_KEY = "AIzaSyDdAiOdIa2I28sphYw36Genb4D--2IN1tU"
 
 # Styling Configuration
-st.set_page_config(page_title="DeepSeek ChatBot", page_icon="🤖", layout="wide")
+st.set_page_config(page_title="Mohammed Al-Yaseen | BGC ChatBot", page_icon="🤖", layout="wide")
 
 # Custom CSS 
 st.markdown("""
