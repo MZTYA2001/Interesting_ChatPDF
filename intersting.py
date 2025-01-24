@@ -207,6 +207,10 @@ if user_input:
         retriever = st.session_state.vectors.as_retriever()
         retrieval_chain = create_retrieval_chain(retriever, document_chain)
 
+        # Limit the number of messages in memory to avoid infinite loops
+        if len(st.session_state.memory.chat_memory.messages) > 10:  # Keep only the last 10 messages
+            st.session_state.memory.chat_memory.messages = st.session_state.memory.chat_memory.messages[-10:]
+
         response = retrieval_chain.invoke({
             "input": user_input,
             "context": retriever.get_relevant_documents(user_input),
