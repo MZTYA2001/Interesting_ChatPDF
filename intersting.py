@@ -241,6 +241,9 @@ def main():
         with st.chat_message("user"):
             st.markdown(user_input)
 
+        # Clear the input after submission
+        st.session_state.user_input = ""
+
         if "vectors" in st.session_state and st.session_state.vectors is not None:
             with st.spinner("Thinking..."):
                 document_chain = create_stuff_documents_chain(llm, prompt)
