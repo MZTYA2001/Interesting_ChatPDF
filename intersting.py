@@ -198,7 +198,7 @@ def main():
     st.image(bgc_logo, width=200)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    st.title("DeepSeek ChatBot 🤖")
+    st.title("Mohammed Al-Yaseen | BGC ChatBot")
 
     # Initialize chat history
     if "messages" not in st.session_state:
