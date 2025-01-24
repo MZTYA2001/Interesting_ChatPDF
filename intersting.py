@@ -73,10 +73,9 @@ st.markdown("""
     width: 100%;
 }
 .chat-container {
-    max-height: calc(100vh - 250px);
+    max-height: calc(100vh - 250px); /* Adjust based on input height */
     overflow-y: auto;
-    padding-bottom: 150px;
-    margin-bottom: 150px; /* Add margin to prevent overlap */
+    padding-bottom: 150px; /* Add padding to prevent overlap with input */
 }
 .chat-message {
     margin: 10px 0;
