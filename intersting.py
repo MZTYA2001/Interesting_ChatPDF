@@ -9,6 +9,7 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.memory import ConversationBufferMemory
 from streamlit_mic_recorder import speech_to_text
 from PIL import Image
+import time
 
 # API Keys (Replace with your actual keys)
 GROQ_API_KEY = "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"
@@ -26,6 +27,7 @@ st.markdown("""
 .stApp {
     background-color: #0A0F24;
     color: #FFFFFF;
+    font-family: 'Arial', sans-serif;
 }
 .stTextInput > div > div > input {
     background-color: #1E1E2E;
@@ -73,9 +75,10 @@ st.markdown("""
     width: 100%;
 }
 .chat-container {
-    max-height: calc(100vh - 250px); /* Adjust based on input height */
+    max-height: calc(100vh - 250px);
     overflow-y: auto;
-    padding-bottom: 150px; /* Add padding to prevent overlap with input */
+    padding-bottom: 150px;
+    margin-bottom: 150px;
 }
 .chat-message {
     margin: 10px 0;
@@ -118,6 +121,12 @@ st.markdown("""
     justify-content: center;
     margin-bottom: 20px;
 }
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -152,6 +161,56 @@ def init_llm():
     except Exception as e:
         st.error(f"Error initializing LLM: {e}")
         return None
+
+def display_chat_history():
+    """Display chat history with custom styling"""
+    st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+    for message in st.session_state.messages:
+        role = message["role"]
+        content = message["content"]
+        st.markdown(f'<div class="chat-message {role}">{content}</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+def process_user_input(user_input, llm):
+    """Process user input and generate assistant response"""
+    if "vectors" in st.session_state and st.session_state.vectors is not None:
+        with st.spinner("Thinking..."):
+            document_chain = create_stuff_documents_chain(llm, prompt)
+            retriever = st.session_state.vectors.as_retriever()
+            retrieval_chain = create_retrieval_chain(retriever, document_chain)
+
+            response = retrieval_chain.invoke({
+                "input": user_input,
+                "context": retriever.get_relevant_documents(user_input),
+                "history": st.session_state.memory.chat_memory.messages
+            })
+
+            assistant_response = response["answer"]
+
+            st.session_state.memory.chat_memory.add_user_message(user_input)
+            st.session_state.memory.chat_memory.add_ai_message(assistant_response)
+
+            st.session_state.messages.append(
+                {"role": "assistant", "content": assistant_response}
+            )
+            st.markdown(f'<div class="chat-message assistant">{assistant_response}</div>', unsafe_allow_html=True)
+
+            # Supporting Information
+            with st.expander("Supporting Information"):
+                if "context" in response:
+                    for i, doc in enumerate(response["context"]):
+                        page_number = doc.metadata.get("page", "unknown")
+                        st.write(f"According to Page: {page_number}")
+                        st.write(doc.page_content)
+                        st.write("--------------------------------")
+                else:
+                    st.write("No context available.")
+    else:
+        assistant_response = "Error: Unable to load embeddings. Please check the embeddings folder."
+        st.session_state.messages.append(
+            {"role": "assistant", "content": assistant_response}
+        )
+        st.markdown(f'<div class="chat-message assistant">{assistant_response}</div>', unsafe_allow_html=True)
 
 def main():
     # Initialize LLM before using it
@@ -205,12 +264,7 @@ def main():
         st.session_state.memory.clear()
 
     # Display chat history
-    st.markdown('<div class="chat-container">', unsafe_allow_html=True)
-    for message in st.session_state.messages:
-        role = message["role"]
-        content = message["content"]
-        st.markdown(f'<div class="chat-message {role}">{content}</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    display_chat_history()
 
     # Process user input
     input_lang_code = "ar" if voice_language == "Arabic" else voice_language.lower()[:2]
@@ -226,46 +280,7 @@ def main():
     if voice_input:
         st.session_state.messages.append({"role": "user", "content": voice_input})
         st.markdown(f'<div class="chat-message user">{voice_input}</div>', unsafe_allow_html=True)
-
-        if "vectors" in st.session_state and st.session_state.vectors is not None:
-            with st.spinner("Thinking..."):
-                document_chain = create_stuff_documents_chain(llm, prompt)
-                retriever = st.session_state.vectors.as_retriever()
-                retrieval_chain = create_retrieval_chain(retriever, document_chain)
-
-                response = retrieval_chain.invoke({
-                    "input": voice_input,
-                    "context": retriever.get_relevant_documents(voice_input),
-                    "history": st.session_state.memory.chat_memory.messages
-                })
-
-                assistant_response = response["answer"]
-
-                st.session_state.memory.chat_memory.add_user_message(voice_input)
-                st.session_state.memory.chat_memory.add_ai_message(assistant_response)
-
-                st.session_state.messages.append(
-                    {"role": "assistant", "content": assistant_response}
-                )
-                st.markdown(f'<div class="chat-message assistant">{assistant_response}</div>', unsafe_allow_html=True)
-
-                # Supporting Information
-                with st.expander("Supporting Information"):
-                    if "context" in response:
-                        for i, doc in enumerate(response["context"]):
-                            page_number = doc.metadata.get("page", "unknown")
-                            st.write(f"According to Page: {page_number}")
-                            st.write(doc.page_content)
-                            st.write("--------------------------------")
-                    else:
-                        st.write("No context available.")
-
-        else:
-            assistant_response = "Error: Unable to load embeddings. Please check the embeddings folder."
-            st.session_state.messages.append(
-                {"role": "assistant", "content": assistant_response}
-            )
-            st.markdown(f'<div class="chat-message assistant">{assistant_response}</div>', unsafe_allow_html=True)
+        process_user_input(voice_input, llm)
 
     # Form for text input
     with st.form(key="user_input_form", clear_on_submit=True):
@@ -279,46 +294,7 @@ def main():
     if submit_button and user_input:
         st.session_state.messages.append({"role": "user", "content": user_input})
         st.markdown(f'<div class="chat-message user">{user_input}</div>', unsafe_allow_html=True)
-
-        if "vectors" in st.session_state and st.session_state.vectors is not None:
-            with st.spinner("Thinking..."):
-                document_chain = create_stuff_documents_chain(llm, prompt)
-                retriever = st.session_state.vectors.as_retriever()
-                retrieval_chain = create_retrieval_chain(retriever, document_chain)
-
-                response = retrieval_chain.invoke({
-                    "input": user_input,
-                    "context": retriever.get_relevant_documents(user_input),
-                    "history": st.session_state.memory.chat_memory.messages
-                })
-
-                assistant_response = response["answer"]
-
-                st.session_state.memory.chat_memory.add_user_message(user_input)
-                st.session_state.memory.chat_memory.add_ai_message(assistant_response)
-
-                st.session_state.messages.append(
-                    {"role": "assistant", "content": assistant_response}
-                )
-                st.markdown(f'<div class="chat-message assistant">{assistant_response}</div>', unsafe_allow_html=True)
-
-                # Supporting Information
-                with st.expander("Supporting Information"):
-                    if "context" in response:
-                        for i, doc in enumerate(response["context"]):
-                            page_number = doc.metadata.get("page", "unknown")
-                            st.write(f"According to Page: {page_number}")
-                            st.write(doc.page_content)
-                            st.write("--------------------------------")
-                    else:
-                        st.write("No context available.")
-
-        else:
-            assistant_response = "Error: Unable to load embeddings. Please check the embeddings folder."
-            st.session_state.messages.append(
-                {"role": "assistant", "content": assistant_response}
-            )
-            st.markdown(f'<div class="chat-message assistant">{assistant_response}</div>', unsafe_allow_html=True)
+        process_user_input(user_input, llm)
 
 if __name__ == "__main__":
     main()
