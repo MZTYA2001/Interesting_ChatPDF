@@ -180,9 +180,7 @@ def main():
                     embeddings_path,
                     embeddings,
                     allow_dangerous_deserialization=True
-                )
-                st.sidebar.write("Embeddings loaded successfully 🎉")
-            except Exception as e:
+                )            except Exception as e:
                 st.error(f"Error loading embeddings: {str(e)}")
                 st.session_state.vectors = None
 
