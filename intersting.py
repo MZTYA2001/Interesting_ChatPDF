@@ -7,12 +7,12 @@ from langchain.chains import create_retrieval_chain
 from langchain_community.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.memory import ConversationBufferMemory
-from streamlit_mic_recorder import speech_to_text
+from streamlit_mic_recorder import mic_ui
 from PIL import Image
 
 # API Keys (Replace with your actual keys)
-GROQ_API_KEY = "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"
-GOOGLE_API_KEY = "AIzaSyDdAiOdIa2I28sphYw36Genb4D--2IN1tU"
+GROQ_API_KEY = "your_groq_api_key"
+GOOGLE_API_KEY = "your_google_api_key"
 
 # Load BGC Logo
 bgc_logo = Image.open("BGC Logo.png")
@@ -129,16 +129,6 @@ prompt = ChatPromptTemplate.from_messages([
     ("system", "Context: {context}"),
 ])
 
-def record_voice(language="en"):
-    text = speech_to_text(
-        start_prompt="🎤",
-        stop_prompt="⏹️",
-        language=language,
-        use_container_width=True,
-        just_once=True,
-    )
-    return text if text else None
-
 def init_llm():
     """Initialize LLM with error handling"""
     if not GROQ_API_KEY or not GOOGLE_API_KEY:
@@ -211,9 +201,6 @@ def main():
         st.markdown(f'<div class="chat-message {role}">{content}</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Process user input
-    input_lang_code = "ar" if voice_language == "Arabic" else voice_language.lower()[:2]
-
     # Sticky input at the bottom
     st.markdown('<div class="sticky-input">', unsafe_allow_html=True)
 
@@ -222,14 +209,11 @@ def main():
 
     # Form for user input
     with st.form(key="user_input_form", clear_on_submit=True):
-        # Text input and voice button in the same row
-        col1, col2 = st.columns([0.85, 0.15])
+        # Text input
+        user_input = st.text_input("Ask something about the document", key="user_input", label_visibility="collapsed")
 
-        with col1:
-            user_input = st.text_input("Ask something about the document", key="user_input", label_visibility="collapsed")
-
-        with col2:
-            voice_input = record_voice(language=input_lang_code)
+        # Microphone recording button
+        recorded_audio = mic_ui(start_prompt="🎤 Recording...", stop_prompt="⏹️ Stop Recording")
 
         submit_button = st.form_submit_button("Send")
 
@@ -237,13 +221,13 @@ def main():
     st.markdown('</div>', unsafe_allow_html=True)
 
     # Process input
-    if voice_input:
-        user_input = voice_input
+    if recorded_audio:
+        user_input = recorded_audio
 
-    if submit_button and (user_input or voice_input):
+    if submit_button and (user_input or recorded_audio):
         # Use the voice input if available
-        if voice_input:
-            user_input = voice_input
+        if recorded_audio:
+            user_input = recorded_audio
         
         st.session_state.messages.append({"role": "user", "content": user_input})
         with st.chat_message("user"):
