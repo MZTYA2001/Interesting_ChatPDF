@@ -104,9 +104,6 @@ st.markdown("""
 .clear-button:hover {
     background-color: #FF6B6B;
 }
-.file-uploader {
-    margin-bottom: 20px;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -169,9 +166,6 @@ else:
     st.error("Please enter both API keys to proceed.")
 
 st.title("DeepSeek ChatBot 🤖")
-
-# File Uploader
-uploaded_file = st.file_uploader("Upload a document", type=["pdf", "txt"], key="file-uploader")
 
 # Initialize chat history
 if "messages" not in st.session_state:
@@ -253,6 +247,9 @@ if human_input:
                         st.write("--------------------------------")
                 else:
                     st.write("No context available.")
+
+            # Clear the input field after submission
+            st.session_state.user_input = ""
     else:
         assistant_response = "Error: Unable to load embeddings. Please check the embeddings folder."
         st.session_state.messages.append(
