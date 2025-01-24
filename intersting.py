@@ -129,15 +129,31 @@ prompt = ChatPromptTemplate.from_messages([
     ("system", "Context: {context}"),
 ])
 
+# Voice Recording Function
 def record_voice(language="en"):
+    state = st.session_state
+
+    if "text_received" not in state:
+        state.text_received = []
+
     text = speech_to_text(
-        start_prompt="🎤",
-        stop_prompt="⏹️",
+        start_prompt="🎤 Click and speak to ask a question",
+        stop_prompt="⚠️ Stop recording 🚨",
         language=language,
         use_container_width=True,
         just_once=True,
     )
-    return text if text else None
+
+    if text:
+        state.text_received.append(text)
+
+    result = ""
+    for text in state.text_received:
+        result += text
+
+    state.text_received = []
+
+    return result if result else None
 
 def init_llm():
     """Initialize LLM with error handling"""
@@ -220,58 +236,79 @@ def main():
     # Create a container for the input and voice button
     st.markdown('<div class="input-container">', unsafe_allow_html=True)
 
-    # Text input
-    col1, col2 = st.columns([4, 1])  # 4: for text input, 1: for voice button
+    # Form for user input
+    with st.form(key="user_input_form", clear_on_submit=True):
+        # Text input and voice button in the same row
+        col1, col2 = st.columns([0.85, 0.15])
 
-    with col1:
-        human_input = st.text_input("", key="user_input", label_visibility="collapsed")
+        with col1:
+            user_input = st.text_input("Ask something about the document", key="user_input", label_visibility="collapsed")
 
-    # Voice button
-    with col2:
-        if st.button("🎤"):
-            voice_input = record_voice(language=input_lang_code)
-            if voice_input:
-                st.session_state.messages.append({"role": "user", "content": voice_input})
-                with st.chat_message("user"):
-                    st.markdown(voice_input)
-        else:
-            voice_input = None
+        with col2:
+            if st.button("🎤", key="voice-button"):
+                voice_input = record_voice(language=input_lang_code)
+            else:
+                voice_input = None
 
-    # Process input (Text or Voice)
-    human_input = human_input or voice_input
+        submit_button = st.form_submit_button("Send")
 
-    if human_input:
-        st.session_state.messages.append({"role": "user", "content": human_input})
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Process input
+    if voice_input:
+        user_input = voice_input
+
+    if submit_button and (user_input or voice_input):
+        # Use the voice input if available
+        if voice_input:
+            user_input = voice_input
+        
+        st.session_state.messages.append({"role": "user", "content": user_input})
         with st.chat_message("user"):
-            st.markdown(human_input)
+            st.markdown(user_input)
 
         if "vectors" in st.session_state and st.session_state.vectors is not None:
-            document_chain = create_stuff_documents_chain(llm, prompt)
-            retriever = st.session_state.vectors.as_retriever()
-            retrieval_chain = create_retrieval_chain(retriever, document_chain)
+            with st.spinner("Thinking..."):
+                document_chain = create_stuff_documents_chain(llm, prompt)
+                retriever = st.session_state.vectors.as_retriever()
+                retrieval_chain = create_retrieval_chain(retriever, document_chain)
 
-            response = retrieval_chain.invoke({
-                "input": human_input,
-                "history": st.session_state.memory.chat_memory.messages
-            })
+                response = retrieval_chain.invoke({
+                    "input": user_input,
+                    "context": retriever.get_relevant_documents(user_input),
+                    "history": st.session_state.memory.chat_memory.messages
+                })
 
-            assistant_response = response["answer"]
+                assistant_response = response["answer"]
 
-            st.session_state.memory.chat_memory.add_user_message(human_input)
-            st.session_state.memory.chat_memory.add_ai_message(assistant_response)
+                st.session_state.memory.chat_memory.add_user_message(user_input)
+                st.session_state.memory.chat_memory.add_ai_message(assistant_response)
 
+                st.session_state.messages.append(
+                    {"role": "assistant", "content": assistant_response}
+                )
+                with st.chat_message("assistant"):
+                    st.markdown(assistant_response)
+
+                # Supporting Information
+                with st.expander("Supporting Information"):
+                    if "context" in response:
+                        for i, doc in enumerate(response["context"]):
+                            page_number = doc.metadata.get("page", "unknown")
+                            st.write(f"According to Page: {page_number}")
+                            st.write(doc.page_content)
+                            st.write("--------------------------------")
+                    else:
+                        st.write("No context available.")
+
+        else:
+            assistant_response = "Error: Unable to load embeddings. Please check the embeddings folder."
             st.session_state.messages.append(
                 {"role": "assistant", "content": assistant_response}
             )
             with st.chat_message("assistant"):
                 st.markdown(assistant_response)
-
-            # Supporting info
-            st.markdown('<div class="supporting-info">', unsafe_allow_html=True)
-            st.write(response["source_documents"])
-            st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
