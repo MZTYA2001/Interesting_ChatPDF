@@ -189,7 +189,7 @@ def main():
 
     # Display BGC Logo
     st.markdown('<div class="logo-container">', unsafe_allow_html=True)
-    st.image(bgc_logo, width=200)
+    st.image(bgc_logo, width=50%)
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.title("DeepSeek ChatBot 🤖")
