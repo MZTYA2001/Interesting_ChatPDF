@@ -124,14 +124,18 @@ prompt = ChatPromptTemplate.from_messages([
 
 # Voice Recording Function
 def record_voice(language="en"):
-    text = speech_to_text(
-        start_prompt="🎤",  # Mic icon
-        stop_prompt="⏹️",  # Stop icon
-        language=language,
-        use_container_width=True,
-        just_once=True,
-    )
-    return text if text else None
+    try:
+        text = speech_to_text(
+            start_prompt="🎤",  # Mic icon
+            stop_prompt="⏹️",  # Stop icon
+            language=language,
+            use_container_width=True,
+            just_once=True,
+        )
+        return text if text else None
+    except Exception as e:
+        st.error(f"Error in voice recording: {e}")
+        return None
 
 def init_llm():
     """Initialize LLM with error handling"""
@@ -254,7 +258,7 @@ def main():
                 # Append assistant response to chat history
                 st.session_state.messages.append(f"Assistant: {assistant_response}")
 
-                # Supporting Information
+                # Display supporting information
                 with st.expander("Supporting Information"):
                     if "context" in response:
                         for i, doc in enumerate(response["context"]):
