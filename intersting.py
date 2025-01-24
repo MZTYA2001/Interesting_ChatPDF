@@ -162,7 +162,7 @@ def main():
     with st.sidebar:
         st.title("Settings")
         voice_language = st.selectbox("Voice Input Language", ["English", "Arabic"])
-        # dark_mode = st.toggle("Dark Mode", value=True)
+        dark_mode = st.toggle("Dark Mode", value=True)
 
     # Initialize vectors
     if "vectors" not in st.session_state:
@@ -189,7 +189,7 @@ def main():
 
     # Display BGC Logo
     st.markdown('<div class="logo-container">', unsafe_allow_html=True)
-    st.image(bgc_logo, width=500)
+    st.image(bgc_logo, width=200)
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.title("DeepSeek ChatBot 🤖")
@@ -232,11 +232,11 @@ def main():
     st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Process input
-    if voice_input:
-        user_input = voice_input
+    # Process input only if explicitly submitted
+    if (user_input or voice_input) and "processed_input" not in st.session_state:
+        if voice_input:
+            user_input = voice_input
 
-    if user_input:
         st.session_state.messages.append({"role": "user", "content": user_input})
         with st.chat_message("user"):
             st.markdown(user_input)
@@ -282,6 +282,15 @@ def main():
             )
             with st.chat_message("assistant"):
                 st.markdown(assistant_response)
+
+        # Mark input as processed
+        st.session_state.processed_input = True
+
+    # Reset processed_input flag after processing
+    if "processed_input" in st.session_state:
+        del st.session_state.processed_input
+        # Clear the input field
+        st.session_state.user_input = ""
 
 if __name__ == "__main__":
     main()
