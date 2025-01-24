@@ -197,7 +197,7 @@ st.markdown('<div class="input-container">', unsafe_allow_html=True)
 col1, col2 = st.columns([0.85, 0.15])
 
 with col1:
-    human_input = st.text_input("Ask something about the document", key="user_input", label_visibility="collapsed")
+    user_input = st.text_input("Ask something about the document", key="user_input", label_visibility="collapsed")
 
 with col2:
     voice_input = record_voice(language=input_lang_code)
@@ -207,12 +207,12 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 # Process input
 if voice_input:
-    human_input = voice_input
+    user_input = voice_input
 
-if human_input:
-    st.session_state.messages.append({"role": "user", "content": human_input})
+if user_input:
+    st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
-        st.markdown(human_input)
+        st.markdown(user_input)
 
     if "vectors" in st.session_state and st.session_state.vectors is not None:
         with st.spinner("Thinking..."):
@@ -221,14 +221,14 @@ if human_input:
             retrieval_chain = create_retrieval_chain(retriever, document_chain)
 
             response = retrieval_chain.invoke({
-                "input": human_input,
-                "context": retriever.get_relevant_documents(human_input),
+                "input": user_input,
+                "context": retriever.get_relevant_documents(user_input),
                 "history": st.session_state.memory.chat_memory.messages
             })
 
             assistant_response = response["answer"]
 
-            st.session_state.memory.chat_memory.add_user_message(human_input)
+            st.session_state.memory.chat_memory.add_user_message(user_input)
             st.session_state.memory.chat_memory.add_ai_message(assistant_response)
 
             st.session_state.messages.append(
