@@ -15,99 +15,98 @@ GROQ_API_KEY = "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"
 GOOGLE_API_KEY = "AIzaSyDdAiOdIa2I28sphYw36Genb4D--2IN1tU"
 
 # Styling Configuration
-st.set_page_config(page_title="BGC ChatBot", page_icon="🏭", layout="wide")
+st.set_page_config(page_title="DeepSeek ChatBot", page_icon="🤖", layout="wide")
 
-# Custom CSS for ChatGPT-like design
+# Custom CSS 
 st.markdown("""
 <style>
-body {
-    color: #333;
-    background-color: #f4f4f4;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-}
 .stApp {
-    max-width: 800px;
-    margin: 0 auto;
-    background-color: white;
-    padding: 20px;
-    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    background-color: #0A0F24;
+    color: #FFFFFF;
 }
-.chat-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #e5e5e5;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
+.stTextInput > div > div > input {
+    background-color: #1E1E2E;
+    color: #FFFFFF;
+    border: 2px solid #4A6CF7;
+    border-radius: 12px;
+    padding: 12px;
+    width: 100%;
 }
-.chat-header h1 {
-    margin: 0;
-    font-size: 1.5rem;
-    color: #333;
-}
-.chat-header .user-info {
-    color: #666;
-    font-size: 0.9rem;
-}
-.chat-container {
-    height: 500px;
-    overflow-y: auto;
-    padding: 20px;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-.chat-message {
-    margin-bottom: 15px;
-    display: flex;
-    align-items: flex-start;
-}
-.chat-message .avatar {
-    width: 30px;
-    height: 30px;
+.mic-button {
+    background-color: #4A6CF7;
+    color: white;
+    border: none;
     border-radius: 50%;
-    margin-right: 10px;
+    width: 50px;
+    height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-left: 10px;
 }
-.chat-message .user .avatar {
-    background-color: #10a37f;
-    color: white;
+.mic-button:hover {
+    background-color: #6382FF;
 }
-.chat-message .assistant .avatar {
-    background-color: #4a5568;
-    color: white;
-}
-.chat-message .message-content {
-    flex-grow: 1;
-    background-color: white;
-    padding: 10px 15px;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-.input-area {
+.sticky-input {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    background-color: #0A0F24;
+    padding: 10px;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+    z-index: 1000;
     display: flex;
     align-items: center;
-    background-color: white;
-    border: 1px solid #e5e5e5;
-    border-radius: 8px;
-    padding: 10px;
+    justify-content: center;
 }
-.input-area input {
-    flex-grow: 1;
-    border: none;
-    outline: none;
-    margin-right: 10px;
+.input-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
 }
-.input-area button {
-    background-color: #10a37f;
+.chat-container {
+    max-height: calc(100vh - 250px);
+    overflow-y: auto;
+    padding-bottom: 150px;
+}
+.chat-message {
+    margin: 10px 0;
+    padding: 12px;
+    border-radius: 12px;
+    background-color: #1E1E2E;
+    max-width: 80%;
+    word-wrap: break-word;
+}
+.chat-message.user {
+    margin-left: auto;
+    background-color: #4A6CF7;
+}
+.chat-message.assistant {
+    margin-right: auto;
+    background-color: #2C2C3E;
+}
+.supporting-info {
+    margin-top: 20px;
+    padding: 12px;
+    background-color: #1E1E2E;
+    border-radius: 12px;
+}
+.clear-button {
+    background-color: #FF4B4B;
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 12px;
     padding: 8px 16px;
     cursor: pointer;
+    transition: background-color 0.3s;
+}
+.clear-button:hover {
+    background-color: #FF6B6B;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -149,17 +148,15 @@ def main():
     if llm is None:
         st.stop()
 
-    # Custom Header
-    st.markdown("""
-    <div class="chat-header">
-        <h1>BGC Chatbot</h1>
-        <div class="user-info">Mohammed Al-Yaseen | BGC</div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Initialize Streamlit Sidebar
+    with st.sidebar:
+        st.title("Settings")
+        voice_language = st.selectbox("Voice Input Language", ["English", "Arabic"])
+        dark_mode = st.toggle("Dark Mode", value=True)
 
-    # Initialize vectors and memory
+    # Initialize vectors
     if "vectors" not in st.session_state:
-        with st.spinner("Loading document embeddings..."):
+        with st.spinner("Loading embeddings... Please wait."):
             try:
                 embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
                 embeddings_path = "embeddings"
@@ -168,47 +165,56 @@ def main():
                     embeddings,
                     allow_dangerous_deserialization=True
                 )
+                st.sidebar.write("Embeddings loaded successfully 🎉")
             except Exception as e:
                 st.error(f"Error loading embeddings: {str(e)}")
                 st.session_state.vectors = None
 
+    # Initialize memory
     if "memory" not in st.session_state:
         st.session_state.memory = ConversationBufferMemory(
             memory_key="history",
             return_messages=True
         )
 
+    st.title("DeepSeek ChatBot 🤖")
+
     # Initialize chat history
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    # Chat display container
+    # Clear chat history
+    if st.button("Clear Chat History", key="clear-button"):
+        st.session_state.messages = []
+        st.session_state.memory.clear()
+
+    # Display chat history
     st.markdown('<div class="chat-container">', unsafe_allow_html=True)
     for message in st.session_state.messages:
         role = message["role"]
         content = message["content"]
-        st.markdown(f'''
-        <div class="chat-message {role}">
-            <div class="avatar">{role[0].upper()}</div>
-            <div class="message-content">{content}</div>
-        </div>
-        ''', unsafe_allow_html=True)
+        st.markdown(f'<div class="chat-message {role}">{content}</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Voice input setup
-    voice_language = st.sidebar.selectbox("Voice Input Language", ["English", "Arabic"])
+    # Process user input
     input_lang_code = "ar" if voice_language == "Arabic" else voice_language.lower()[:2]
 
-    # Input area
-    st.markdown('<div class="input-area">', unsafe_allow_html=True)
-    col1, col2 = st.columns([0.8, 0.2])
-    
+    # Sticky input at the bottom
+    st.markdown('<div class="sticky-input">', unsafe_allow_html=True)
+
+    # Create a container for the input and voice button
+    st.markdown('<div class="input-container">', unsafe_allow_html=True)
+
+    # Text input and voice button in the same row
+    col1, col2 = st.columns([0.85, 0.15])
+
     with col1:
-        user_input = st.text_input("Ask something about BGC", key="user_input", label_visibility="collapsed")
-    
+        user_input = st.text_input("Ask something about the document", key="user_input", label_visibility="collapsed")
+
     with col2:
         voice_input = record_voice(language=input_lang_code)
 
+    st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
     # Process input
@@ -217,9 +223,11 @@ def main():
 
     if user_input:
         st.session_state.messages.append({"role": "user", "content": user_input})
+        with st.chat_message("user"):
+            st.markdown(user_input)
 
         if "vectors" in st.session_state and st.session_state.vectors is not None:
-            with st.spinner("Generating response..."):
+            with st.spinner("Thinking..."):
                 document_chain = create_stuff_documents_chain(llm, prompt)
                 retriever = st.session_state.vectors.as_retriever()
                 retrieval_chain = create_retrieval_chain(retriever, document_chain)
@@ -238,12 +246,27 @@ def main():
                 st.session_state.messages.append(
                     {"role": "assistant", "content": assistant_response}
                 )
+                with st.chat_message("assistant"):
+                    st.markdown(assistant_response)
 
-                # Rerun to refresh the chat display
-                st.experimental_rerun()
+                # Supporting Information
+                with st.expander("Supporting Information"):
+                    if "context" in response:
+                        for i, doc in enumerate(response["context"]):
+                            page_number = doc.metadata.get("page", "unknown")
+                            st.write(f"**Document {i+1}** - Page: {page_number}")
+                            st.write(doc.page_content)
+                            st.write("--------------------------------")
+                    else:
+                        st.write("No context available.")
 
         else:
-            st.error("Unable to load document embeddings. Please check the system configuration.")
+            assistant_response = "Error: Unable to load embeddings. Please check the embeddings folder."
+            st.session_state.messages.append(
+                {"role": "assistant", "content": assistant_response}
+            )
+            with st.chat_message("assistant"):
+                st.markdown(assistant_response)
 
 if __name__ == "__main__":
     main()
