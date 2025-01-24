@@ -197,7 +197,8 @@ st.markdown('<div class="input-container">', unsafe_allow_html=True)
 col1, col2 = st.columns([0.85, 0.15])
 
 with col1:
-    user_input = st.text_input("Ask something about the document", key="user_input", label_visibility="collapsed")
+    # Use a custom key for the text input
+    user_input = st.text_input("Ask something about the document", key="chat_input", label_visibility="collapsed")
 
 with col2:
     voice_input = record_voice(language=input_lang_code)
@@ -249,7 +250,7 @@ if user_input:
                     st.write("No context available.")
 
             # Clear the input field after submission
-            st.session_state.user_input = ""
+            st.session_state.chat_input = ""
     else:
         assistant_response = "Error: Unable to load embeddings. Please check the embeddings folder."
         st.session_state.messages.append(
