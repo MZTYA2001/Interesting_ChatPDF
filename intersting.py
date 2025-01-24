@@ -18,25 +18,25 @@ GOOGLE_API_KEY = "AIzaSyDdAiOdIa2I28sphYw36Genb4D--2IN1tU"
 bgc_logo = Image.open("BGC Logo.png")
 
 # Styling Configuration
-st.set_page_config(page_title="Mohammed Al-Yaseen | BGC ChatBot", page_icon=bgc_logo, layout="wide")
+st.set_page_config(page_title="Mohammed Al-Yaseen | BGC ChatBot", page_icon="🤖", layout="wide")
 
 # Custom CSS 
 st.markdown("""
 <style>
 .stApp {
-    background-color: #0A0F24;
-    color: #FFFFFF;
+    background-color: #FFFFFF;
+    color: #007ec9;
 }
 .stTextInput > div > div > input {
-    background-color: #1E1E2E;
-    color: #FFFFFF;
-    border: 2px solid #4A6CF7;
+    background-color: #FFFFFF;
+    color: #007ec9;
+    border: 2px solid #007ec9;
     border-radius: 12px;
     padding: 12px;
     width: 100%;
 }
 .mic-button {
-    background-color: #4A6CF7;
+    background-color: #007ec9;
     color: white;
     border: none;
     border-radius: 50%;
@@ -50,7 +50,7 @@ st.markdown("""
     margin-left: 10px;
 }
 .mic-button:hover {
-    background-color: #6382FF;
+    background-color: #005f9e;
 }
 .sticky-input {
     position: fixed;
@@ -58,9 +58,9 @@ st.markdown("""
     left: 50%;
     transform: translateX(-50%);
     width: 80%;
-    background-color: #0A0F24;
+    background-color: #FFFFFF;
     padding: 10px;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
     z-index: 1000;
     display: flex;
     align-items: center;
@@ -81,23 +81,29 @@ st.markdown("""
     margin: 10px 0;
     padding: 12px;
     border-radius: 12px;
-    background-color: #1E1E2E;
+    background-color: #FFFFFF;
+    border: 2px solid #007ec9;
     max-width: 80%;
     word-wrap: break-word;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 .chat-message.user {
     margin-left: auto;
-    background-color: #4A6CF7;
+    background-color: #007ec9;
+    color: white;
+    border: none;
 }
 .chat-message.assistant {
     margin-right: auto;
-    background-color: #2C2C3E;
+    background-color: #FFFFFF;
+    color: #007ec9;
+    border: 2px solid #007ec9;
 }
 .supporting-info {
     margin-top: 20px;
     padding: 12px;
-    background-color: #1E1E2E;
+    background-color: #FFFFFF;
+    border: 2px solid #007ec9;
     border-radius: 12px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
@@ -162,7 +168,7 @@ def main():
     with st.sidebar:
         st.title("Settings")
         voice_language = st.selectbox("Voice Input Language", ["English", "Arabic"])
-        dark_mode = st.toggle("Dark Mode", value=True)
+        dark_mode = st.toggle("Dark Mode", value=False)
 
     # Initialize vectors
     if "vectors" not in st.session_state:
@@ -232,11 +238,11 @@ def main():
     st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Process input only if explicitly submitted
-    if (user_input or voice_input) and "processed_input" not in st.session_state:
-        if voice_input:
-            user_input = voice_input
+    # Process input
+    if voice_input:
+        user_input = voice_input
 
+    if user_input:
         st.session_state.messages.append({"role": "user", "content": user_input})
         with st.chat_message("user"):
             st.markdown(user_input)
@@ -282,15 +288,6 @@ def main():
             )
             with st.chat_message("assistant"):
                 st.markdown(assistant_response)
-
-        # Mark input as processed
-        st.session_state.processed_input = True
-
-    # Reset processed_input flag after processing
-    if "processed_input" in st.session_state:
-        del st.session_state.processed_input
-        # Use a workaround to clear the input field
-        st.session_state.user_input = ""
 
 if __name__ == "__main__":
     main()
