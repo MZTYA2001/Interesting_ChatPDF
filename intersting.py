@@ -24,19 +24,19 @@ st.set_page_config(page_title="Mohammed Al-Yaseen | BGC ChatBot", page_icon="ðŸ¤
 st.markdown("""
 <style>
 .stApp {
-    background: linear-gradient(135deg, #0A0F24, #1A1F34);
-    color: #FFFFFF;
+    background-color: #FFFFFF;
+    color: #007ec9;
 }
 .stTextInput > div > div > input {
-    background-color: #1E1E2E;
-    color: #FFFFFF;
-    border: 2px solid #4A6CF7;
+    background-color: #FFFFFF;
+    color: #007ec9;
+    border: 2px solid #007ec9;
     border-radius: 12px;
     padding: 12px;
     width: 100%;
 }
 .mic-button {
-    background-color: #4A6CF7;
+    background-color: #007ec9;
     color: white;
     border: none;
     border-radius: 50%;
@@ -50,7 +50,7 @@ st.markdown("""
     margin-left: 10px;
 }
 .mic-button:hover {
-    background-color: #6382FF;
+    background-color: #005f9e;
 }
 .sticky-input {
     position: fixed;
@@ -58,9 +58,9 @@ st.markdown("""
     left: 50%;
     transform: translateX(-50%);
     width: 80%;
-    background-color: #0A0F24;
+    background-color: #FFFFFF;
     padding: 10px;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
     z-index: 1000;
     display: flex;
     align-items: center;
@@ -81,23 +81,29 @@ st.markdown("""
     margin: 10px 0;
     padding: 12px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #1E1E2E, #2C2C3E);
+    background-color: #FFFFFF;
+    border: 2px solid #007ec9;
     max-width: 80%;
     word-wrap: break-word;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 .chat-message.user {
     margin-left: auto;
-    background: linear-gradient(135deg, #4A6CF7, #6382FF);
+    background-color: #007ec9;
+    color: white;
+    border: none;
 }
 .chat-message.assistant {
     margin-right: auto;
-    background: linear-gradient(135deg, #2C2C3E, #3C3C4E);
+    background-color: #FFFFFF;
+    color: #007ec9;
+    border: 2px solid #007ec9;
 }
 .supporting-info {
     margin-top: 20px;
     padding: 12px;
-    background: linear-gradient(135deg, #1E1E2E, #2C2C3E);
+    background-color: #FFFFFF;
+    border: 2px solid #007ec9;
     border-radius: 12px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
@@ -162,7 +168,7 @@ def main():
     with st.sidebar:
         st.title("Settings")
         voice_language = st.selectbox("Voice Input Language", ["English", "Arabic"])
-        dark_mode = st.toggle("Dark Mode", value=True)
+        dark_mode = st.toggle("Dark Mode", value=False)
 
     # Initialize vectors
     if "vectors" not in st.session_state:
