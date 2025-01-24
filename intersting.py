@@ -4,7 +4,7 @@ from langchain.vectorstores import FAISS
 from langchain.memory import ConversationBufferMemory
 
 # Placeholder for the BGC logo (replace with your actual image if needed)
-bgc_logo = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Example_logo.svg/640px-Example_logo.svg.png"
+bgc_logo = "BGC Logo.png"
 
 # Function to initialize the LLM
 def init_llm():
