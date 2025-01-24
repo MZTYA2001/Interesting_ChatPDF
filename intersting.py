@@ -210,7 +210,8 @@ def main():
     for message in st.session_state.messages:
         role = message["role"]
         content = message["content"]
-        st.markdown(f'<div class="chat-message {role}">{content}</div>', unsafe_allow_html=True)
+        with st.chat_message(role):
+            st.markdown(f'<div class="chat-message {role}">{content}</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
     # Process user input
@@ -227,7 +228,7 @@ def main():
     if voice_input:
         st.session_state.messages.append({"role": "user", "content": voice_input})
         with st.chat_message("user"):
-            st.markdown(voice_input)
+            st.markdown(f'<div class="chat-message user">{voice_input}</div>', unsafe_allow_html=True)
 
         if "vectors" in st.session_state and st.session_state.vectors is not None:
             with st.spinner("Thinking..."):
@@ -250,7 +251,7 @@ def main():
                     {"role": "assistant", "content": assistant_response}
                 )
                 with st.chat_message("assistant"):
-                    st.markdown(assistant_response)
+                    st.markdown(f'<div class="chat-message assistant">{assistant_response}</div>', unsafe_allow_html=True)
 
                 # Supporting Information
                 with st.expander("Supporting Information"):
@@ -269,7 +270,7 @@ def main():
                 {"role": "assistant", "content": assistant_response}
             )
             with st.chat_message("assistant"):
-                st.markdown(assistant_response)
+                st.markdown(f'<div class="chat-message assistant">{assistant_response}</div>', unsafe_allow_html=True)
 
     # Form for text input
     with st.form(key="user_input_form", clear_on_submit=True):
@@ -283,7 +284,7 @@ def main():
     if submit_button and user_input:
         st.session_state.messages.append({"role": "user", "content": user_input})
         with st.chat_message("user"):
-            st.markdown(user_input)
+            st.markdown(f'<div class="chat-message user">{user_input}</div>', unsafe_allow_html=True)
 
         if "vectors" in st.session_state and st.session_state.vectors is not None:
             with st.spinner("Thinking..."):
@@ -306,7 +307,7 @@ def main():
                     {"role": "assistant", "content": assistant_response}
                 )
                 with st.chat_message("assistant"):
-                    st.markdown(assistant_response)
+                    st.markdown(f'<div class="chat-message assistant">{assistant_response}</div>', unsafe_allow_html=True)
 
                 # Supporting Information
                 with st.expander("Supporting Information"):
@@ -325,7 +326,7 @@ def main():
                 {"role": "assistant", "content": assistant_response}
             )
             with st.chat_message("assistant"):
-                st.markdown(assistant_response)
+                st.markdown(f'<div class="chat-message assistant">{assistant_response}</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
