@@ -156,24 +156,12 @@ st.title("Mohammed Al-Yaseen | BGC ChatBot")
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display chat history and supporting information
+# Display chat history
 st.markdown('<div class="chat-container">', unsafe_allow_html=True)
 for message in st.session_state.messages:
     role = message["role"]
     content = message["content"]
     st.markdown(f'<div class="chat-message {role}">{content}</div>', unsafe_allow_html=True)
-
-# Supporting Information
-if "response" in st.session_state:
-    with st.expander("Supporting Information"):
-        if "context" in st.session_state.response:
-            for i, doc in enumerate(st.session_state.response["context"]):
-                page_number = doc.metadata.get("page", "unknown")
-                st.write(f"**Document {i+1}** - Page: {page_number}")
-                st.write(doc.page_content)
-                st.write("--------------------------------")
-        else:
-            st.write("No context available.")
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Process user input
@@ -228,18 +216,16 @@ if human_input:
         with st.chat_message("assistant"):
             st.markdown(assistant_response)
 
-        # Store response for supporting information
-        st.session_state.response = response
-
-        # Scroll to the bottom to show the latest message
-        st.markdown(
-            """
-            <script>
-            window.scrollTo(0, document.body.scrollHeight);
-            </script>
-            """,
-            unsafe_allow_html=True,
-        )
+        # Supporting Information
+        with st.expander("Supporting Information"):
+            if "context" in response:
+                for i, doc in enumerate(response["context"]):
+                    page_number = doc.metadata.get("page", "unknown")
+                    st.write(f"**Document {i+1}** - Page: {page_number}")
+                    st.write(doc.page_content)
+                    st.write("--------------------------------")
+            else:
+                st.write("No context available.")
     else:
         assistant_response = "Error: Unable to load embeddings. Please check the embeddings folder."
         st.session_state.messages.append(
