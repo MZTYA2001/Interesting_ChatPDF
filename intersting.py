@@ -236,34 +236,24 @@ def main():
     # Create a container for the input and voice button
     st.markdown('<div class="input-container">', unsafe_allow_html=True)
 
-    # Form for user input
+    # Voice button (outside the form)
+    if st.button("🎤", key="voice-button"):
+        voice_input = record_voice(language=input_lang_code)
+        if voice_input:
+            st.session_state.messages.append({"role": "user", "content": voice_input})
+            with st.chat_message("user"):
+                st.markdown(voice_input)
+
+    # Form for text input
     with st.form(key="user_input_form", clear_on_submit=True):
-        # Text input and voice button in the same row
-        col1, col2 = st.columns([0.85, 0.15])
-
-        with col1:
-            user_input = st.text_input("Ask something about the document", key="user_input", label_visibility="collapsed")
-
-        with col2:
-            if st.button("🎤", key="voice-button"):
-                voice_input = record_voice(language=input_lang_code)
-            else:
-                voice_input = None
-
+        user_input = st.text_input("Ask something about the document", key="user_input", label_visibility="collapsed")
         submit_button = st.form_submit_button("Send")
 
     st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
     # Process input
-    if voice_input:
-        user_input = voice_input
-
-    if submit_button and (user_input or voice_input):
-        # Use the voice input if available
-        if voice_input:
-            user_input = voice_input
-        
+    if submit_button and user_input:
         st.session_state.messages.append({"role": "user", "content": user_input})
         with st.chat_message("user"):
             st.markdown(user_input)
